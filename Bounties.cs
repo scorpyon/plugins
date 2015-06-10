@@ -54,7 +54,76 @@ namespace Oxide.Plugins
         //    var amount = 600;
         //    RemoveItemsFromInventory(player, item, amount);
         //}
-
+		
+		// THIS CONTROLS WHEN A PLAYER IS KILLED
+		private void OnEntityDeath(EntityDeathEvent deathEvent)
+        {
+            if (deathEvent.Entity.IsPlayer)
+            {
+                var killer = deathEvent.KillingDamage.DamageSource.Owner;
+                var player = deathEvent.Entity.Owner;
+				
+				// Check for bounties
+				var reward = GetBountyOnPlayer(player);
+				if (reward.Count < 1) return;
+				
+				// Get the inventory
+				var inventory = player.GetInventory();
+				
+				// Give the rewards to the player
+				foreach(var bounty in reward)
+				{
+					var resource = bounty.Key;
+					var amount = bounty.Value;
+					// Create a blueprint
+					var blueprintForName = InvDefinitions.Instance.Blueprints.GetBlueprintForName(resource, true, true);
+					// Create item stack
+					var invGameItemStack = new InvGameItemStack(blueprintForName, amount, null);
+					// Add the reward to the inventory
+					ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
+				}
+				
+				// Notify everyone
+				PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + killer.DisplayName + " has ended + [FF00FF]" + player.DisplayName + "'s life and has secured the bounty on their head!");
+            }
+        }
+		
+		private Dictionary<string,int> GetBountyOnPlayer(Player player)
+		{
+			var reward = new Dictionary<string,int>();
+			
+			foreach(var bounty in bountyList)
+			{
+				if(bounty[1].ToLower() == player.Name.ToLower() && bounty[4] == "active")
+				{
+					// Add this bounty to the list of rewards
+					reward.Add(bounty[2],Int32.Parse(bounty[3]));
+				}
+			}
+			
+			return reward;
+		}
+		
+		// Capitalise the Starting letters
+		private string Capitalise(string word)
+		{
+			var finalText = "";
+			finalText = Char.ToUpper(word[0]).ToString();
+			var spaceFound = 0;
+			for(var i=1; i<word.Length;i++)
+			{
+				if(word[i] == ' ')
+				{
+					spaceFound = i + 1;
+				}
+				if(i == spaceFound)
+				{
+					finalText = finalText + Char.ToUpper(word[i]).ToString();
+				}
+				else finalText = finalText + word[i].ToString();
+			}
+			return finalText;
+		}
 
         // SEE THE CURRENT BOUNTY LIST
         [ChatCommand("bounties")]
@@ -200,7 +269,7 @@ namespace Oxide.Plugins
         private void AskThePlayerToConfirmTheBounty(Player player, string playerName, string bountyName, string bountyResource, string bountyAmount)
         {
             var title = "Bounty Declared!";
-            var message = "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + bountyName + "[FFFFFF]!";
+            var message = "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]!";
             var confirmText = "Make it so!";
             var cancelText = "Actually, no...";
             bool interupt = false;
@@ -216,7 +285,7 @@ namespace Oxide.Plugins
         private void ConfirmTheBounty(Player player, string playerName, string bountyName, string bountyResource, string bountyAmount)
         {
             var guild = PlayerExtensions.GetGuild(player).Name;
-            PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName + "[FFFFFF] of [FF00FF]" + guild + "[FFFFFF] has set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + bountyName + "[FFFFFF]!");
+            PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName + "[FFFFFF] of [FF00FF]" + Capitalise(guild) + "[FFFFFF] has set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]!");
 
             // Confirm the bonty in the list
             foreach(var bounty in bountyList)
@@ -470,7 +539,7 @@ namespace Oxide.Plugins
                         bounty[1] = bountyPlayerName.ToLower();
 
                         // Tell the player
-                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + bountyPlayerName + "[FFFFFF]'s name to the bounty you are creating. If you have added a resource and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating. If you have added a resource and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
 
                         // Save the data
                         SaveBountyListData();
@@ -491,7 +560,7 @@ namespace Oxide.Plugins
             bountyList[lastRecord][1] = bountyPlayerName.ToLower();
 
             // Tell the player
-            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + bountyPlayerName + "[FFFFFF]'s name to the bounty you are creating. If you have added a resource and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating. If you have added a resource and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
 
             // Save the data
             SaveBountyListData();
