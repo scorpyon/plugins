@@ -55,6 +55,37 @@ namespace Oxide.Plugins
         //    RemoveItemsFromInventory(player, item, amount);
         //}
 		
+		[ChatCommand("testbountylist")]
+        private void TestBountyList(Player player, string cmd)
+        {
+            var testBounty = new string[]{ "hunter", "killer", "Wood", "999"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "fdsfsf", "fzg fd g", "Stone", "234"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "fsd fds f", "fzdg zd", "Wood", "1000"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "hunthg rfhfder", "z fdzg zfg", "Iron", "999"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "h fd hfz f", "kilgzgfzhler", "Iron Ingot", "999"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "fg zgfg fdzg f", "hzfdzh hf hfzh", "Steel Ingot", "999"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "gfdz g", " hfzdhf", "Flax", "254"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "f hfzdhfd", "hfz hfd", "Wood", "99"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ " hhzrhh r", "z hahhzf hg", "Iron", "2"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ " gf gfgrgas", "zh rehardf", "Wood", "999"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "g fdz gfz", "gf gz gfzd", "Wood", "999"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "hfdzhf fhfgf", "fgfz fhgzfh h", "Wood", "999"};
+			bountyList.Add(testBounty);
+        }
+		
+		
+		
 		// THIS CONTROLS WHEN A PLAYER IS KILLED
 		private void OnEntityDeath(EntityDeathEvent deathEvent)
         {
@@ -73,8 +104,8 @@ namespace Oxide.Plugins
 				// Give the rewards to the player
 				foreach(var bounty in reward)
 				{
-					var resource = bounty.Key;
-					var amount = bounty.Value;
+					var resource = bounty[0];
+					var amount = Int32.Parse(bounty[1]);
 					// Create a blueprint
 					var blueprintForName = InvDefinitions.Instance.Blueprints.GetBlueprintForName(resource, true, true);
 					// Create item stack
@@ -88,18 +119,28 @@ namespace Oxide.Plugins
             }
         }
 		
-		private Dictionary<string,int> GetBountyOnPlayer(Player player)
+		private Collection<Collection<string>> GetBountyOnPlayer(Player player)
 		{
-			var reward = new Dictionary<string,int>();
+			var reward = new Collection<Collection<string>>();
 			
-			foreach(var bounty in bountyList)
+			for(var i=0; i<bountyList.Count; i++)
 			{
-				if(bounty[1].ToLower() == player.Name.ToLower() && bounty[4] == "active")
+				if(bountyList[i][1].ToLower() == player.Name.ToLower() && bountyList[i][4] == "active")
 				{
 					// Add this bounty to the list of rewards
-					reward.Add(bounty[2],Int32.Parse(bounty[3]));
+					var bountyReward = new Collection<string>();
+					bountyReward.Add(bountyList[i][2]);
+					bountyReward.Add(bountyList[i][3].ToString());
+					reward.Add(bountyReward);
+					
+					// remove this bounty from the list
+					bountyList.RemoveAt(i);
+					i--;
 				}
 			}
+			
+			// Save the data
+			SaveBountyListData();
 			
 			return reward;
 		}
@@ -132,10 +173,10 @@ namespace Oxide.Plugins
             var title = "Active Bounties";
             var message = "";
 
-            foreach(var found in bountyList)
-            {
-                PrintToChat(found[0] + " " + found[1] + " " + found[2] + " " + found[3] + " " + found[4]);
-            }
+            // foreach(var found in bountyList)
+            // {
+                // PrintToChat(found[0] + " " + found[1] + " " + found[2] + " " + found[3] + " " + found[4]);
+            // }
 
             if(bountyList.Count <= 0)
             {
@@ -143,13 +184,15 @@ namespace Oxide.Plugins
             }
             else
             {
+				var maxItemsToShow = bountyList.Count;
+				if(maxItemsToShow > 10) maxItemsToShow = 10;
                 var count = 0;
-                for(var i=0; i<bountyList.Count;i++)
+                for(var i=0; i<maxItemsToShow;i++)
                 {
                     if(bountyList[i][4] == "active") 
                     {
                         count++;
-                        message = message + "[FF0000]" + bountyList[i][1] + "[FFFFFF] - [00FF00]" + bountyList[i][2] + " " + bountyList[i][3] + "[FFFFFF]\n (Set by [FF00FF]" + bountyList[i][0] + "[FFFFFF]) \n";
+                        message = message + "[FF0000]" + Capitalise(bountyList[i][1]) + "[FFFFFF] - [00FF00]" + bountyList[i][2] + " " + bountyList[i][3] + "[FFFFFF]\n (Set by [FF00FF]" + Capitalise(bountyList[i][0]) + "[FFFFFF]) \n";
                     }
                 }
                 if(count == 0) message = "There are currently no bounties available.";
