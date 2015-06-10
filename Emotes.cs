@@ -20,18 +20,6 @@ namespace Oxide.Plugins
         private const string defaultName = "everyone";
         private Random random = new Random();
 
-        void Loaded()
-        {
-            cmd.AddChatCommand("emote", this, "EmotePlayer");
-            cmd.AddChatCommand("taunt", this, "TauntPlayer");
-            cmd.AddChatCommand("kiss", this, "KissPlayer");
-            cmd.AddChatCommand("wave", this, "WavePlayer");
-            cmd.AddChatCommand("smile", this, "SmilePlayer");
-            cmd.AddChatCommand("dance", this, "DancePlayer");
-            cmd.AddChatCommand("slap", this, "SlapPlayer");
-            cmd.AddChatCommand("cheer", this, "CheerPlayer");
-        }
-
         [ChatCommand("emote")]
         private void EmotePlayer(Player player, string cmd, string[] targetPlayer)
         {
