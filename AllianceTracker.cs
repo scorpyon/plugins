@@ -117,7 +117,7 @@ namespace Oxide.Plugins
             }
 
             // Report that the alliance is ending
-            PrintToChat("[FF0000]Alliance Organiser [FF00FF](ALLIANCE ENDED!) [FFFFFF]: [00FF00]" + player.Name + " [FFFFFF]from [00FF00]" + myGuild + " [FFFFFF]has ended the Alliance with [00FF00]" + guildName + "[FFFFFF]! They are no longer friends!");
+            PrintToChat("[FF0000]Alliance Organiser [FF00FF](ALLIANCE ENDED!) [FFFFFF]: [00FF00]" + player.DisplayName + " [FFFFFF]from [00FF00]" + Capitalise(myGuild) + " [FFFFFF]has ended the Alliance with [00FF00]" + Capitalise(guildName) + "[FFFFFF]! They are no longer friends!");
 
             // End the alliance
             RemoveAlliance(myGuild.ToLower(), guildName.ToLower());
@@ -144,11 +144,11 @@ namespace Oxide.Plugins
             var myAlliances = GetGuildList(guildName);
             if (myAlliances == null || myAlliances.Count < 1)
             {
-                PrintToChat(player, "[FF0000]Alliance Organiser[FFFFFF] : [00FF00]" + guildName + "[FFFFFF] is not currently in an alliance with another guild.");
+                PrintToChat(player, "[FF0000]Alliance Organiser[FFFFFF] : [00FF00]" + Capitalise(guildName) + "[FFFFFF] is not currently in an alliance with another guild.");
                 return;
             }
 
-            PrintToChat(player, "[FF0000]Alliance Organiser[FFFFFF] : [FF00FF]" + guildName + "[FFFFFF] is currently allied with the following guilds :");
+            PrintToChat(player, "[FF0000]Alliance Organiser[FFFFFF] : [FF00FF]" + Capitalise(guildName) + "[FFFFFF] is currently allied with the following guilds :");
             foreach (var alliance in myAlliances)
             {
                 PrintToChat(player, "[00FF00]" + alliance);
@@ -193,7 +193,7 @@ namespace Oxide.Plugins
             }
 
             // Broadcast an accept message
-            PrintToChat("[FF0000]Alliance Organiser [FF00FF](NEW ALLIANCE) [FFFFFF]: [00FF00]" + myGuild + " [FFFFFF]has formed a new Alliance with [00FF00]" + guildName + "[FFFFFF]! May this friendship last through the ages!");
+            PrintToChat("[FF0000]Alliance Organiser [FF00FF](NEW ALLIANCE) [FFFFFF]: [00FF00]" + Capitalise(myGuild) + " [FFFFFF]has formed a new Alliance with [00FF00]" + Capitalise(guildName) + "[FFFFFF]! May this friendship last through the ages!");
 
             // Remove request from Request List
             requestList.RemoveAt(allianceRequestNumber);
@@ -230,7 +230,7 @@ namespace Oxide.Plugins
             var allianceRequestNumber = AllianceRequestAlreadyExists(myGuild, guildName);
             if(allianceRequestNumber >= 0)
             { 
-                PrintToChat("[FF0000]Alliance Organiser[FFFFFF] : The alliance request with [00FF00]" + guildName + "[FFFFFF] has been denied.");
+                PrintToChat("[FF0000]Alliance Organiser[FFFFFF] : The alliance request with [00FF00]" + Capitalise(guildName) + "[FFFFFF] has been denied.");
                 requestList.RemoveAt(allianceRequestNumber);
                 return;
             }
@@ -373,7 +373,7 @@ namespace Oxide.Plugins
             }
 
             // Send Alliance Request
-            PrintToChat("[FF0000]Alliance Organiser : [00FF00]" + playerName + "[FFFFFF] from [00FF00]" + myGuild + "[FFFFFF] is requesting a formal Alliance with [00FF00]" + playerGuild + "[FFFFFF].");
+            PrintToChat("[FF0000]Alliance Organiser : [00FF00]" + Capitalise(playerName) + "[FFFFFF] from [00FF00]" + Capitalise(myGuild) + "[FFFFFF] is requesting a formal Alliance with [00FF00]" + Capitalise(playerGuild) + "[FFFFFF].");
             PrintToChat("[FFFFFF]Type [00FF00]/acceptally [FF00FF]<guild_name> [FFFFFF]to accept the request or [00FF00]/denyally [FF00FF]<guild_name> [FFFFFF]to deny the request.");
 
             // Add request to the RequestAlliance list
@@ -514,5 +514,27 @@ namespace Oxide.Plugins
             }
             return guildName;
         }
+		
+		
+		// Capitalise the Starting letters
+		private string Capitalise(string word)
+		{
+			var finalText = "";
+			finalText = Char.ToUpper(word[0]).ToString();
+			var spaceFound = 0;
+			for(var i=1; i<word.Length;i++)
+			{
+				if(word[i] == ' ')
+				{
+					spaceFound = i + 1;
+				}
+				if(i == spaceFound)
+				{
+					finalText = finalText + Char.ToUpper(word[i]).ToString();
+				}
+				else finalText = finalText + word[i].ToString();
+			}
+			return finalText;
+		}
 	}
 }
