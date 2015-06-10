@@ -18,10 +18,11 @@ using CodeHatch.ItemContainer;
 using CodeHatch.UserInterface.Dialogues;
 using CodeHatch.Inventory.Blueprints.Components;
 
+
 namespace Oxide.Plugins
 {
-    [Info("Bounties", "Scorpyon", "1.0.1")]
-    public class Bounties : ReignOfKingsPlugin
+    [Info("Bounty Tracker", "Scorpyon", "1.0.1")]
+    public class BountyTracker : ReignOfKingsPlugin
     {
         private Collection<string[]> bountyList = new Collection<string[]>();
         void Log(string msg) => Puts($"{Title} : {msg}");
@@ -46,137 +47,92 @@ namespace Oxide.Plugins
 
         // ===========================================================================================================
 
+
         //[ChatCommand("testremove")]
         //private void TestRemovalScript(Player player, string cmd)
         //{
+			// if (!player.HasPermission("admin"))
+				// {
+					// PrintToChat(player, "Only an admin can use this command.");
+					// return;
+				// }
         //    var inventory = player.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
         //    var item = "Wood";
         //    var amount = 600;
         //    RemoveItemsFromInventory(player, item, amount);
         //}
 		
+		
+		// [ChatCommand("testbounty")]
+        // private void TestBountySingleAddition(Player player, string cmd)
+        // {
+			// if (!player.HasPermission("admin"))
+            // {
+                 // PrintToChat(player, "Only an admin can use this command.");
+                 // return;
+            // }
+			// bountyList = new Collection<string[]>();
+		
+            // var testBounty = new string[]{ "scorpyon", "lord bob", "Wood", "999", "active"};
+			// bountyList.Add(testBounty);
+			// PrintToChat("Test bounties added.");
+		// }
+		
 		[ChatCommand("testbountylist")]
         private void TestBountyList(Player player, string cmd)
         {
-            var testBounty = new string[]{ "hunter", "killer", "Wood", "999"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "fdsfsf", "fzg fd g", "Stone", "234"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "fsd fds f", "fzdg zd", "Wood", "1000"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "hunthg rfhfder", "z fdzg zfg", "Iron", "999"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "h fd hfz f", "kilgzgfzhler", "Iron Ingot", "999"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "fg zgfg fdzg f", "hzfdzh hf hfzh", "Steel Ingot", "999"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "gfdz g", " hfzdhf", "Flax", "254"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "f hfzdhfd", "hfz hfd", "Wood", "99"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ " hhzrhh r", "z hahhzf hg", "Iron", "2"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ " gf gfgrgas", "zh rehardf", "Wood", "999"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "g fdz gfz", "gf gz gfzd", "Wood", "999"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "hfdzhf fhfgf", "fgfz fhgzfh h", "Wood", "999"};
-			bountyList.Add(testBounty);
-        }
-		
-		
-		
-		// THIS CONTROLS WHEN A PLAYER IS KILLED
-		private void OnEntityDeath(EntityDeathEvent deathEvent)
-        {
-            if (deathEvent.Entity.IsPlayer)
+			if (!player.HasPermission("admin"))
             {
-                var killer = deathEvent.KillingDamage.DamageSource.Owner;
-                var player = deathEvent.Entity.Owner;
-				
-				// Check for bounties
-				var reward = GetBountyOnPlayer(player);
-				if (reward.Count < 1) return;
-				
-				// Get the inventory
-				var inventory = player.GetInventory();
-				
-				// Give the rewards to the player
-				foreach(var bounty in reward)
-				{
-					var resource = bounty[0];
-					var amount = Int32.Parse(bounty[1]);
-					// Create a blueprint
-					var blueprintForName = InvDefinitions.Instance.Blueprints.GetBlueprintForName(resource, true, true);
-					// Create item stack
-					var invGameItemStack = new InvGameItemStack(blueprintForName, amount, null);
-					// Add the reward to the inventory
-					ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
-				}
-				
-				// Notify everyone
-				PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + killer.DisplayName + " has ended + [FF00FF]" + player.DisplayName + "'s life and has secured the bounty on their head!");
+                 PrintToChat(player, "Only an admin can use this command.");
+                 return;
             }
+			bountyList = new Collection<string[]>();
+		
+            var testBounty = new string[]{ "Hunter", "lord bob", "Wood", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Lord Night", "lord bob", "Stone", "234", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "The Dark One", "lord bob", "Wood", "1000", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Maximus", "Painboy", "Iron", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "The Hero", "The Villain", "Iron Ingot", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "The Villain", "Your Mum", "Steel Ingot", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Sam", " Bob", "Flax", "254", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Another Guy", "The other guy", "Wood", "99", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ " Shady Guy", "lord bob", "Iron", "2", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ " The Hero", "Bob", "Wood", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "The Villain", "lord bob", "Wood", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Richie Rich", "Sammy the Squib", "Wood", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Prey", "lord bob", "Steel Ingot", "999", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Hunter", " Mr Magic", "Flax", "254", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Maximus", "Squirnoogle", "Wood", "99", "active"};
+			bountyList.Add(testBounty);
+            testBounty = new string[]{ "Dark Soul", "Reaper Man", "Iron", "2", "active"};
+			bountyList.Add(testBounty);
+			
+			PrintToChat("Test bounties added.");
         }
 		
-		private Collection<Collection<string>> GetBountyOnPlayer(Player player)
-		{
-			var reward = new Collection<Collection<string>>();
-			
-			for(var i=0; i<bountyList.Count; i++)
-			{
-				if(bountyList[i][1].ToLower() == player.Name.ToLower() && bountyList[i][4] == "active")
-				{
-					// Add this bounty to the list of rewards
-					var bountyReward = new Collection<string>();
-					bountyReward.Add(bountyList[i][2]);
-					bountyReward.Add(bountyList[i][3].ToString());
-					reward.Add(bountyReward);
-					
-					// remove this bounty from the list
-					bountyList.RemoveAt(i);
-					i--;
-				}
-			}
-			
-			// Save the data
-			SaveBountyListData();
-			
-			return reward;
-		}
 		
-		// Capitalise the Starting letters
-		private string Capitalise(string word)
-		{
-			var finalText = "";
-			finalText = Char.ToUpper(word[0]).ToString();
-			var spaceFound = 0;
-			for(var i=1; i<word.Length;i++)
-			{
-				if(word[i] == ' ')
-				{
-					spaceFound = i + 1;
-				}
-				if(i == spaceFound)
-				{
-					finalText = finalText + Char.ToUpper(word[i]).ToString();
-				}
-				else finalText = finalText + word[i].ToString();
-			}
-			return finalText;
-		}
-
+		
         // SEE THE CURRENT BOUNTY LIST
         [ChatCommand("bounties")]
         private void ViewTheCurrentBounties(Player player, string cmd)
         {
             var title = "Active Bounties";
             var message = "";
-
-            // foreach(var found in bountyList)
-            // {
-                // PrintToChat(found[0] + " " + found[1] + " " + found[2] + " " + found[3] + " " + found[4]);
-            // }
+			var maxBounties = 15;
 
             if(bountyList.Count <= 0)
             {
@@ -185,7 +141,7 @@ namespace Oxide.Plugins
             else
             {
 				var maxItemsToShow = bountyList.Count;
-				if(maxItemsToShow > 10) maxItemsToShow = 10;
+				if(maxItemsToShow > maxBounties) maxItemsToShow = maxBounties;
                 var count = 0;
                 for(var i=0; i<maxItemsToShow;i++)
                 {
@@ -286,45 +242,6 @@ namespace Oxide.Plugins
             }
         }
 
-        private bool PlayerHasTheResources(Player player, string resource, string amountAsString)
-        {
-            // Convert the amount to int
-            var amount = Int32.Parse(amountAsString);
-
-            // Check player's inventory
-            var inventory = player.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
-
-            // Check how much the player has
-            var foundAmount = 0;
-            foreach (var item in inventory.Contents.Where(item => item != null))
-            {
-                if(item.Name == resource)
-                {
-                    foundAmount = foundAmount + item.StackAmount;
-                }
-            }
-
-            if(foundAmount >= amount) return true;
-            return false;
-            
-        }
-
-        private void AskThePlayerToConfirmTheBounty(Player player, string playerName, string bountyName, string bountyResource, string bountyAmount)
-        {
-            var title = "Bounty Declared!";
-            var message = "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]!";
-            var confirmText = "Make it so!";
-            var cancelText = "Actually, no...";
-            bool interupt = false;
-            bool broadcast = false;
-
-            player.ShowPopup(title,message);
-            //PlayerExtensions.ShowConfirmPopup(player,title,message,"Let's do it!","Nope!",ConfirmTheBounty(player, playerName, bountyName, bountyResource, bountyAmount));
-
-            // TEMPORARY FIX 
-            ConfirmTheBounty(player, playerName, bountyName, bountyResource, bountyAmount);
-        }
-
         private void ConfirmTheBounty(Player player, string playerName, string bountyName, string bountyResource, string bountyAmount)
         {
             var guild = PlayerExtensions.GetGuild(player).Name;
@@ -357,37 +274,6 @@ namespace Oxide.Plugins
             // Save the data
             SaveBountyListData();
         }
-
-
-
-        [ChatCommand("seeallbounty")]
-        private void SeeAllBountiesOnServer(Player player, string cmd)
-        {
-            if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only an admin can use this command.");
-                return;
-            }
-
-            if(bountyList.Count < 1)
-            {
-                PrintToChat(player, "[FF0000]Bounty[FFFFFF] : There are no active bounties at this time.");
-                return;
-            }
-
-            // Reset the list
-            var bountyText = "";
-            foreach(var bounty in bountyList)
-            {
-                foreach(var word in bounty)
-                {
-                    bountyText = string.Format(bountyText + " {0}", word);
-                }
-            }
-
-            PrintToChat(player, "[FF0000]Bounty[FFFFFF] : " + bountyText);
-        }
-
         
         //SETTING A BOUNTY AMOUNT
         [ChatCommand("setbountyamount")]
@@ -628,5 +514,136 @@ namespace Oxide.Plugins
             }
             return newText;
         }
+		
+		
+		// THIS CONTROLS WHEN A PLAYER IS KILLED
+		private void OnEntityDeath(EntityDeathEvent deathEvent)
+        {
+            if (deathEvent.Entity.IsPlayer)
+            {
+                var killer = deathEvent.KillingDamage.DamageSource.Owner;
+                var player = deathEvent.Entity.Owner;
+				
+				// Check for bounties
+				var reward = GetBountyOnPlayer(player);
+				if (reward.Count < 1) return;
+				
+				// Make sure the player is not in the same guild
+				if(player.GetGuild().Name == killer.GetGuild().Name)
+				{
+					PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName + "[FFFFFF] was slain by a member of the same guild, so no bounty was collected!");
+					return;
+				}
+				
+				// Get the inventory
+				var inventory = killer.GetInventory();
+				
+				// Give the rewards to the player
+				foreach(var bounty in reward)
+				{
+					var resource = bounty[0];
+					var amount = Int32.Parse(bounty[1]);
+					PrintToChat("Reward = " + resource + " " + amount.ToString());
+					// Create a blueprint
+					var blueprintForName = InvDefinitions.Instance.Blueprints.GetBlueprintForName(resource, true, true);
+					// Create item stack
+					var invGameItemStack = new InvGameItemStack(blueprintForName, amount, null);
+					// Add the reward to the inventory
+					ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
+				}
+				
+				// Notify everyone
+				PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + killer.DisplayName + "[FFFFFF] has ended [FF00FF]" + player.DisplayName + "[FFFFFF]'s life and has secured the bounty on their head!");
+            }
+        }
+		
+		private Collection<Collection<string>> GetBountyOnPlayer(Player player)
+		{
+			var reward = new Collection<Collection<string>>();
+			
+			for(var i=0; i<bountyList.Count; i++)
+			{
+				if(bountyList[i][1].ToLower() == player.Name.ToLower() && bountyList[i][4] == "active")
+				{
+					// Add this bounty to the list of rewards
+					var bountyReward = new Collection<string>();
+					bountyReward.Add(bountyList[i][2]);
+					bountyReward.Add(bountyList[i][3].ToString());
+					reward.Add(bountyReward);
+					
+					// remove this bounty from the list
+					bountyList.RemoveAt(i);
+					i--;
+				}
+			}
+			
+			// Save the data
+			SaveBountyListData();
+			
+			return reward;
+		}
+		
+		// Capitalise the Starting letters
+		private string Capitalise(string word)
+		{
+			var finalText = "";
+			finalText = Char.ToUpper(word[0]).ToString();
+			var spaceFound = 0;
+			for(var i=1; i<word.Length;i++)
+			{
+				if(word[i] == ' ')
+				{
+					spaceFound = i + 1;
+				}
+				if(i == spaceFound)
+				{
+					finalText = finalText + Char.ToUpper(word[i]).ToString();
+				}
+				else finalText = finalText + word[i].ToString();
+			}
+			return finalText;
+		}
+		
+		
+        private bool PlayerHasTheResources(Player player, string resource, string amountAsString)
+        {
+            // Convert the amount to int
+            var amount = Int32.Parse(amountAsString);
+
+            // Check player's inventory
+            var inventory = player.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
+
+            // Check how much the player has
+            var foundAmount = 0;
+            foreach (var item in inventory.Contents.Where(item => item != null))
+            {
+                if(item.Name == resource)
+                {
+                    foundAmount = foundAmount + item.StackAmount;
+                }
+            }
+
+            if(foundAmount >= amount) return true;
+            return false;
+            
+        }
+
+        private void AskThePlayerToConfirmTheBounty(Player player, string playerName, string bountyName, string bountyResource, string bountyAmount)
+        {
+            var title = "Bounty Declared!";
+            var message = "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]!";
+            var confirmText = "Make it so!";
+            var cancelText = "Actually, no...";
+            bool interupt = false;
+            bool broadcast = false;
+
+            player.ShowPopup(title,message);
+            //PlayerExtensions.ShowConfirmPopup(player,title,message,"Let's do it!","Nope!",ConfirmTheBounty(player, playerName, bountyName, bountyResource, bountyAmount));
+
+            // TEMPORARY FIX 
+            ConfirmTheBounty(player, playerName, bountyName, bountyResource, bountyAmount);
+        }
+
+
 	}
 }
