@@ -78,51 +78,51 @@ namespace Oxide.Plugins
 			// PrintToChat("Test bounties added.");
 		// }
 		
-		[ChatCommand("testbountylist")]
-        private void TestBountyList(Player player, string cmd)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                 PrintToChat(player, "Only an admin can use this command.");
-                 return;
-            }
-			bountyList = new Collection<string[]>();
+		// [ChatCommand("testbountylist")]
+        // private void TestBountyList(Player player, string cmd)
+        // {
+			// if (!player.HasPermission("admin"))
+            // {
+                 // PrintToChat(player, "Only an admin can use this command.");
+                 // return;
+            // }
+			// bountyList = new Collection<string[]>();
 		
-            var testBounty = new string[]{ "Hunter", "lord bob", "Wood", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Lord Night", "lord bob", "Stone", "234", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "The Dark One", "lord bob", "Wood", "1000", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Maximus", "Painboy", "Iron", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "The Hero", "The Villain", "Iron Ingot", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "The Villain", "Your Mum", "Steel Ingot", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Sam", " Bob", "Flax", "254", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Another Guy", "The other guy", "Wood", "99", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ " Shady Guy", "lord bob", "Iron", "2", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ " The Hero", "Bob", "Wood", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "The Villain", "lord bob", "Wood", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Richie Rich", "Sammy the Squib", "Wood", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Prey", "lord bob", "Steel Ingot", "999", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Hunter", " Mr Magic", "Flax", "254", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Maximus", "Squirnoogle", "Wood", "99", "active"};
-			bountyList.Add(testBounty);
-            testBounty = new string[]{ "Dark Soul", "Reaper Man", "Iron", "2", "active"};
-			bountyList.Add(testBounty);
+            // var testBounty = new string[]{ "Hunter", "lord bob", "Wood", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Lord Night", "lord bob", "Stone", "234", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "The Dark One", "lord bob", "Wood", "1000", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Maximus", "Painboy", "Iron", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "The Hero", "The Villain", "Iron Ingot", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "The Villain", "Your Mum", "Steel Ingot", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Sam", " Bob", "Flax", "254", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Another Guy", "The other guy", "Wood", "99", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ " Shady Guy", "lord bob", "Iron", "2", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ " The Hero", "Bob", "Wood", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "The Villain", "lord bob", "Wood", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Richie Rich", "Sammy the Squib", "Wood", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Prey", "lord bob", "Steel Ingot", "999", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Hunter", " Mr Magic", "Flax", "254", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Maximus", "Squirnoogle", "Wood", "99", "active"};
+			// bountyList.Add(testBounty);
+            // testBounty = new string[]{ "Dark Soul", "Reaper Man", "Iron", "2", "active"};
+			// bountyList.Add(testBounty);
 			
-			PrintToChat("Test bounties added.");
-        }
+			// PrintToChat("Test bounties added.");
+        // }
 		
 		
 		

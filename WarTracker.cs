@@ -16,7 +16,7 @@ using CodeHatch.Networking.Events.Players;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.0.5")]
+    [Info("WarTracker", "Scorpyon", "1.0.6")]
     public class WarTracker : ReignOfKingsPlugin
     {
         //

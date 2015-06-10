@@ -16,7 +16,7 @@ using CodeHatch.Networking.Events.Players;
 
 namespace Oxide.Plugins
 {
-    [Info("AllianceTracker", "Scorpyon", "1.0.2")]
+    [Info("AllianceTracker", "Scorpyon", "1.0.3")]
     public class AllianceTracker : ReignOfKingsPlugin
     {
         private Dictionary<string, Collection<string>> allianceList = new Dictionary<string, Collection<string>>();
