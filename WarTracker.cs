@@ -90,12 +90,12 @@ namespace Oxide.Plugins
                         var intPrepSeconds = prepTimeLeft - (Int32.Parse(prepHours) * 60 * 60) - (Int32.Parse(prepMinutes) * 60);
                         var prepSeconds = intPrepSeconds.ToString();
 
-                        PrintToChat("[FF0000]War Report : [00FF00]" + WarList[i][1] + "[FFFFFF] is preparing for war with [00FF00]" + WarList[i][2]);
+                        PrintToChat("[FF0000]War Report : [00FF00]" + Capitalise(WarList[i][1]) + "[FFFFFF] is preparing for war with [00FF00]" + Capitalise(WarList[i][2]));
                         PrintToChat("[FFFFFF]There are [00FF00]" + prepHours + "[FFFFFF]hrs, [00FF00]" + prepMinutes + "[FFFFFF]mins, [00FF00]" + prepSeconds + "[FFFFFF]secs until this war begins!");
                     }
                     else
                     {
-                        PrintToChat("[FF0000]War Report : [00FF00]" + WarList[i][1] + "[FFFFFF] is at war with [00FF00]" + WarList[i][2]);
+                        PrintToChat("[FF0000]War Report : [00FF00]" + Capitalise(WarList[i][1]) + "[FFFFFF] is at war with [00FF00]" + Capitalise(WarList[i][2]));
                         PrintToChat("[00FF00]" + hours + "[FFFFFF]hrs, [00FF00]" + minutes + "[FFFFFF]mins, [00FF00]" + seconds + "[FFFFFF]secs remaining.");
                     }
                 }
@@ -115,7 +115,7 @@ namespace Oxide.Plugins
 
                 if(timeLeft == WarTimeLength)
                 {
-                    PrintToChat("[FF0000]WAR BETWEEN [00FF00]" + war[1] + "[FF0000] AND " + war[2] + "[FF0000] HAS BEGUN!");
+                    PrintToChat("[FF0000]WAR BETWEEN [00FF00]" + Capitalise(war[1]) + "[FF0000] AND " + Capitalise(war[2]) + "[FF0000] HAS BEGUN!");
                 }
 
                 timeLeft = timeLeft - 1;
@@ -126,7 +126,7 @@ namespace Oxide.Plugins
                 // If war has ended, let everyone know and end the war
                 if(timeLeft <= 0)
                 {
-                    PrintToChat("[FF0000] War Report [FFFFFF]([00FF00]WAR OVER![FFFFFF]) : The war between [00FF00]" + war[1] + " [FFFFFF] and [00FF00]" + war[2] + "[FFFFFF] has now ended!");
+                    PrintToChat("[FF0000] War Report [FFFFFF]([00FF00]WAR OVER![FFFFFF]) : The war between [00FF00]" + Capitalise(war[1]) + " [FFFFFF] and [00FF00]" + Capitalise(war[2]) + "[FFFFFF] has now ended!");
                     EndWar(war[0]);
                 }
             }
@@ -262,7 +262,7 @@ namespace Oxide.Plugins
             }
 
             // Tell the World that war has been declared!
-            string warText = player.DisplayName + "[FFFFFF] ([FF0000]Declaring War[FFFFFF]) : [00FF00]" + myGuild + " [FFFFFF]has declared war on [00FF00]" + playerGuild + "[FFFFFF]! They have [00FF00]" + WarPrepTimeHours + "[FFFFFF]hrs, [00FF00]" + WarPrepTimeMinutes + "[FFFFFF]mins and [00FF00]" + WarPrepTimeSeconds + "[FFFFFF]secs to prepare for war!";
+            string warText = player.DisplayName + "[FFFFFF] ([FF0000]Declaring War[FFFFFF]) : [00FF00]" + Capitalise(myGuild) + " [FFFFFF]has declared war on [00FF00]" + Capitalise(playerGuild) + "[FFFFFF]! They have [00FF00]" + WarPrepTimeHours + "[FFFFFF]hrs, [00FF00]" + WarPrepTimeMinutes + "[FFFFFF]mins and [00FF00]" + WarPrepTimeSeconds + "[FFFFFF]secs to prepare for war!";
             PrintToChat(warText);
             
             // Begin the War!
@@ -297,7 +297,27 @@ namespace Oxide.Plugins
                 }
             }
         }
-
+		
+		
+		// Capitalise the Starting letters
+		private string Capitalise(string word)
+		{
+			var finalText = "";
+			finalText = Char.ToUpper(word[0]).ToString();
+			var spaceFound = 0;
+			for(var i=1; i<word.Length;i++)
+			{
+				if(word[i] == ' ')
+				{
+					spaceFound = i + 1;
+				}
+				if(i == spaceFound)
+				{
+					finalText = finalText + Char.ToUpper(word[i]).ToString();
+				}
+				else finalText = finalText + word[i].ToString();
+			}
+			return finalText;
+		}
 	}
-
 }
