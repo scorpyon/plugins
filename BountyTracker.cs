@@ -21,7 +21,7 @@ using CodeHatch.Inventory.Blueprints.Components;
 
 namespace Oxide.Plugins
 {
-    [Info("Bounty Tracker", "Scorpyon", "1.0.1")]
+    [Info("Bounty Tracker", "Scorpyon", "1.0.2")]
     public class BountyTracker : ReignOfKingsPlugin
     {
         // ===========================================================================================================
@@ -135,25 +135,50 @@ namespace Oxide.Plugins
             }
         }
 
-        private void ConfirmTheBounty(Player player, Options selection, Dialogue dialogue, object contextData, string playerName, string bountyName, string bountyResource, string bountyAmount)
+        private void ConfirmTheBounty(Player player, Options selection, Dialogue dialogue, object contextData)
         {
 			if (selection != Options.Yes)
             {
                 PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have cancelled the bounty request.");
                 return;
             }
-			            
-			var guild = PlayerExtensions.GetGuild(player).Name;
-            PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName + "[FFFFFF] of [FF00FF]" + Capitalise(guild) + "[FFFFFF] has set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]!");
+
+			var guild = PlayerExtensions.GetGuild(player).DisplayName;
 
             // Confirm the bounty in the list
+			var bountyDetails = new string[5];
             foreach(var bounty in bountyList)
             {
-                if(bounty[0] == playerName.ToLower() && bounty[1] == bountyName.ToLower() && bounty[2] == bountyResource && bounty[3] == bountyAmount)
+                if(bounty[0] == player.Name.ToLower())
                 {
+					// Make sure the player has enough resource for this!
+					if(!PlayerHasTheResources(player, bounty[2], bounty[3])) 
+					{
+						PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You do not have the resources for this bounty in your inventory!");
+						return;
+					}
+					
+					PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : Setting up bounty...");
+					
+					// Remove the resource
+					int removeAmount = Int32.Parse(bounty[3]); 
+					RemoveItemsFromInventory(player, bounty[2], removeAmount);
+					
                     bounty[4] = "active";
+					
+					for(var i=0;i<bounty.Length;i++)
+					{
+						bountyDetails[i] = bounty[i].ToString();
+					}
+
+					PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName.ToString() + "[FFFFFF] of [FF00FF]" + Capitalise(guild) + "[FFFFFF] has set a bounty reward of [FF0000]" + bountyDetails[3].ToString() + " " + bountyDetails[2].ToString() + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyDetails[1].ToString()) + "[FFFFFF]!");
+
                 }
             }
+
+			
+			// Save the data.
+			SaveBountyListData();
         }
         
         [ChatCommand("resetbounty")]
@@ -534,7 +559,7 @@ namespace Oxide.Plugins
         {
 
 			// Load the next Popup!
-			player.ShowConfirmPopup("Set Bounty Details", "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]! Confirm the bounty?", "Make it so!", "Actually, no!", (selection, dialogue, data) => ConfirmTheBounty(player, selection, dialogue, data, playerName, bountyName, bountyResource, bountyAmount));
+			player.ShowConfirmPopup("Set Bounty Details", "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]! Confirm the bounty?", "Make it so!", "Actually, no!", (selection, dialogue, data) => ConfirmTheBounty(player, selection, dialogue, data));
         }
 
 
