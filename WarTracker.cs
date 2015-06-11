@@ -33,8 +33,13 @@ namespace Oxide.Plugins
         private const bool noPeaceKilling = true;
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT CRESTS TO BE DAMAGED WHEN AT WAR (Prevents Base Stealing)
         private const bool noCrestKilling = true;
+        
+        
+        
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT BUILDINGS TO BE DAMAGED WHEN AT WAR (Prevents Base Destruction)
-        private const bool noBaseKilling = true;
+        //private const bool noBaseKilling = true; //(Currently Not Working - disregard for now...)
+
+
 
 
 
@@ -90,8 +95,7 @@ namespace Oxide.Plugins
         // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
         private void OnEntityHealthChange(EntityDamageEvent damageEvent)
         {
-           // if (damageEvent.Damage.Amount < 0) return;
-            PrintToChat("Detecting damage");
+            if (damageEvent.Damage.Amount < 0) return;
             if (noPeaceKilling)
             {
                 if (
@@ -102,7 +106,6 @@ namespace Oxide.Plugins
                     && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
                     )
                 {
-                    PrintToChat("Detecting damage to a player");
                     damageEvent.Cancel("Can Only Kill When At War");
                     damageEvent.Damage.Amount = 0f;
                     PrintToChat(damageEvent.Damage.DamageSource.Owner,
@@ -116,7 +119,6 @@ namespace Oxide.Plugins
                 {
                     if (damageEvent.Entity.name.Contains("Crest"))
                     {
-                        PrintToChat("Detecting damage to a crest");
                         damageEvent.Cancel("Can Only Break Crests When At War");
                         damageEvent.Damage.Amount = 0f;
                         PrintToChat(damageEvent.Damage.DamageSource.Owner,
@@ -124,23 +126,22 @@ namespace Oxide.Plugins
                     }
                 }
             }
-            if (noBaseKilling)
-            {
-                // Make sure it's not a player with a clever name! 
-                if (!damageEvent.Entity.IsPlayer)
-                {
-                    if (damageEvent.Entity.name.Contains("Block") || damageEvent.Entity.name.Contains("Ramp") ||
-                        damageEvent.Entity.name.Contains("Stairs") || damageEvent.Entity.name.Contains("Door") ||
-                        damageEvent.Entity.name.Contains("Gate"))
-                    {
-                        PrintToChat("Detecting damage to a block");
-                        damageEvent.Cancel("Can Only Attack Bases When At War");
-                        damageEvent.Damage.Amount = 0f;
-                        PrintToChat(damageEvent.Damage.DamageSource.Owner,
-                            "[FF0000]War General : [FFFFFF]You cannot attack another guild's base when you are not at war with them!");
-                    }
-                }
-            }
+            //if (noBaseKilling)
+            //{
+            //    // Make sure it's not a player with a clever name! 
+            //    if (!damageEvent.Entity.IsPlayer)
+            //    {
+            //        if (damageEvent.Entity.name.Contains("Block") || damageEvent.Entity.name.Contains("Ramp") ||
+            //            damageEvent.Entity.name.Contains("Stairs") || damageEvent.Entity.name.Contains("Door") ||
+            //            damageEvent.Entity.name.Contains("Gate"))
+            //        {
+            //            damageEvent.Cancel("Can Only Attack Bases When At War");
+            //            damageEvent.Damage.Amount = 0f;
+            //            PrintToChat(damageEvent.Damage.DamageSource.Owner,
+            //                "[FF0000]War General : [FFFFFF]You cannot attack another guild's base when you are not at war with them!");
+            //        }
+            //    }
+            //}
         }
 
         private void WarReport()
