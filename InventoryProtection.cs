@@ -51,36 +51,36 @@ namespace Oxide.Plugins
         // ===========================================================================================================
 
 		
-		private void OnPlayerConnected(Player player)
-        {
-			var inventoryIsWrong = false;
+		// private void OnPlayerConnected(Player player)
+        // {
+			// var inventoryIsWrong = false;
 			
-			//Check if the player has an inventory saved
-			if(inventorySaveList.ContainsKey(player))
-			{
-				//The player's current inventory contents
-				var currentContents = GetInventoryContents(player);
+			// //Check if the player has an inventory saved
+			// if(inventorySaveList.ContainsKey(player))
+			// {
+				// //The player's current inventory contents
+				// var currentContents = GetInventoryContents(player);
 				
-				//The saved contents
-				var savedContents = inventorySaveList[player];
+				// //The saved contents
+				// var savedContents = inventorySaveList[player];
 				
-				for(var i=0; i<currentContents.Count;i++)
-				{
-					// If the resource is wrong
-					if(currentContents[i][0] != savedContents[i][0] || currentContents[i][1] != savedContents[i][1])
-					{
-						inventoryIsWrong = true;
-						break;
-					}
-				}
-				if(inventoryIsWrong)
-				{
-					OverwritePlayerInventory(player, savedContents);
-				}
-				Log("Loading Player Inventory Data for " + player.DisplayName);
-			}
-			else Log("No inventory save found for " + player.DisplayName);
-        }
+				// for(var i=0; i<currentContents.Count;i++)
+				// {
+					// // If the resource is wrong
+					// if(currentContents[i][0] != savedContents[i][0] || currentContents[i][1] != savedContents[i][1])
+					// {
+						// inventoryIsWrong = true;
+						// break;
+					// }
+				// }
+				// if(inventoryIsWrong)
+				// {
+					// OverwritePlayerInventory(player, savedContents);
+				// }
+				// Log("Loading Player Inventory Data for " + player.DisplayName);
+			// }
+			// else Log("No inventory save found for " + player.DisplayName);
+        // }
 		
 		private void OverwritePlayerInventory(Player player, Collection<string[]> savedContents)
 		{
@@ -109,10 +109,17 @@ namespace Oxide.Plugins
             }
 		}
 		
-		private void OnPlayerDisconnected(Player player)
-        {
+		// private void OnPlayerDisconnected(Player player)
+        // {
+			// Log("Saving Player Inventory Data for " + player.DisplayName);
+			// if(player != null) StoreThePlayerInventory(player);
+        // }
+		
+		private void StoreThePlayerInventory(Player player)
+		{
 			//Get the inventory contents
 			var inventory = GetInventoryContents(player);
+			if(inventory == null) return;
 
 			// Check if the store exists
 			if(inventorySaveList !=null)
@@ -127,9 +134,8 @@ namespace Oxide.Plugins
 				//Add the player's inventory record
 				inventorySaveList.Add(player,inventory);
 			}
-			Log("Saving Player Inventory Data for " + player.DisplayName);
 			SaveInventoryData();
-        }
+		}
 		
 		private Collection<string[]> GetInventoryContents(Player player)
 		{
@@ -143,54 +149,5 @@ namespace Oxide.Plugins
 			return inventoryContents;
 		}
 		
-        // public void RemoveItemsFromInventory(Player player, string resource, int amount)
-        // {
-            // var inventory = player.GetInventory().Contents;
-
-            // // Check how much the player has
-            // var amountRemaining = amount;
-            // var removeAmount = amountRemaining;
-            // foreach (InvGameItemStack item in inventory.Where(item => item != null))
-            // {
-                // if(item.Name == resource)
-                // {
-                    // removeAmount = amountRemaining;
-
-                    // // Check if there is enough in the stack
-                    // if (item.StackAmount < amountRemaining)
-                    // {
-                        // removeAmount = item.StackAmount;
-                    // }
-
-                    // amountRemaining = amountRemaining - removeAmount;
-
-                    // inventory.SplitItem(item, removeAmount, true);
-                    // if (amountRemaining <= 0) return;
-                // }
-            // }
-        // }
-
-        // private bool PlayerHasTheResources(Player player, string resource, string amountAsString)
-        // {
-            // // Convert the amount to int
-            // var amount = Int32.Parse(amountAsString);
-
-            // // Check player's inventory
-            // var inventory = player.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
-
-            // // Check how much the player has
-            // var foundAmount = 0;
-            // foreach (var item in inventory.Contents.Where(item => item != null))
-            // {
-                // if(item.Name == resource)
-                // {
-                    // foundAmount = foundAmount + item.StackAmount;
-                // }
-            // }
-
-            // if(foundAmount >= amount) return true;
-            // return false;
-            
-        // }
 	}
 }
