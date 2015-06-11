@@ -1,0 +1,371 @@
+Simple ESP:
+Code:
+                GUIStyle espColor = new GUIStyle();
+                espColor.normal.textColor = Color.red;
+                if (CodeHatch.Engine.Core.Cache.Entity.LocalPlayerExists)
+                {
+                    CodeHatch.Engine.Core.Cache.Entity localPlayer = CodeHatch.Engine.Core.Cache.Entity.LocalPlayer;
+                    Vector3 localPlayerHead = localPlayer.Position;
+
+                    foreach (CodeHatch.Engine.Core.Cache.Entity Player in CodeHatch.Engine.Core.Cache.Entity.GetAll())
+                    {
+                        if (localPlayer == Player)
+                            continue;
+                        if (Player.IsPlayer)
+                        {
+                            Vector3 pos = Player.Position;
+                            Vector3 posScreen = Camera.main.WorldToScreenPoint(pos);
+                            float dist = Vector3.Distance(pos, localPlayerHead);
+                            if (posScreen.z > 0 & posScreen.y < Screen.width - 2)
+                            {
+                                posScreen.y = Screen.height - (posScreen.y + 1f);
+                                GUI.Label(new Rect(posScreen.x, posScreen.y, 200, 40), "o   " + Player.Controller.Name + string.Format(" [{0:0}m]", (object)dist), espColor);
+                            }
+                        }
+                    }
+                }
+Giving items:
+Code:
+            textField2 = GUI.TextField(new Rect(baseRect.xMin, baseRect.yMin + 40, baseRect.width, baseRect.height), textField2);
+            if (GUI.Button(new Rect(baseRect.xMin, baseRect.yMin + 60, baseRect.width, baseRect.height), "Give Item"))
+            {
+                int num;
+                string s = "";
+                if (int.TryParse(textField2, out num))
+                {
+                    for (int i = 0; i < InvBlueprints.Instance.AllBlueprintNames.Count; i++)
+                    {
+                        if (i == num)
+                        {
+                            s = InvBlueprints.Instance.AllBlueprintNames[i];
+                        }
+                    }
+                }
+                CodeHatch.Inventory.Blueprints.InvItemBlueprint blueprint =
+                    InvDefinitions.Instance.Blueprints.GetBlueprintForName(s, true, true);
+                InvGameItemStack stack = new InvGameItemStack(blueprint, 1, null);
+                CodeHatch.ItemContainer.ItemContainerExtensions.GetContainerOfType(
+                    CodeHatch.Engine.Core.Cache.Entity.LocalPlayer.Controller.CurrentCharacter.Entity,
+                    CodeHatch.ItemContainer.CollectionTypes.Inventory).Contents.AddItem(stack, true);
+            }
+IDs:
+Code:
+0        Advanced Fletcher
+1        Ancient Crown
+2        Ancient Sword
+3        Anvil
+4        Apple
+5        Archery Target
+6        Baby Chicken
+7        Baked Clay
+8        Ballista
+9        Ballista Bolt
+10        Bandage
+11        Bat
+12        Bat Wing
+13        Bear Hide
+14        Bellows
+15        Bent Horn
+16        Berries
+17        Blood
+18        Bone
+19        Bone Axe
+20        Bone Dagger
+21        Bone Horn
+22        Bone Spiked Club
+23        Bread
+24        Brown Beans
+25        Burnt Bird
+26        Burnt Meat
+27        Cabbage
+28        Campfire
+29        Candlestand
+30        Carrot
+31        Chandelier
+32        Charcoal
+33        Chicken
+34        Clay
+35        Clay Block
+36        Clay Ramp
+37        Clay Stairs
+38        Cobblestone Block
+39        Cobblestone Ramp
+40        Cobblestone Stairs
+41        Cooked Bird
+42        Cooked Meat
+43        Crossbow
+44        Crow
+45        Deer
+46        Deer Leg Club
+47        Diamond
+48        Dirt
+49        Driftwood Club
+50        Duck Feet
+51        Explosive Keg
+52        Fang
+53        Fat
+54        Feather
+55        Fire Water
+56        Firepit
+57        FirePlace(Great)
+58        FirePlace(Stone)
+59        Flax
+60        Fletcher
+61        Flowers
+62        Fluffy Bed
+63        Fuse
+64        Grain
+65        Granary
+66        Grizzly Bear
+67        Ground Torch
+68        Guillotine
+69        Hanging Lantern
+70        Hangin Torch
+71        Hay
+72        Hay Bale Target
+73        Heart
+74        Holdable Candle
+75        Holdable Lantern
+76        Holdable Torch
+77        Iron
+78        Iron Axe
+79        Iron Bar Window
+80        Iron Battle Axe
+81        Iron Chest
+82        Iron Crest
+83        Iron Door
+84        Iron Flanged Mace
+85        Iron Floor Torch
+86        Iron Gate
+87        Iron Halberd
+88        Iron Hatchet
+89        Iron Ingot
+90        Iron Javelin
+91        Iron Pickaxe
+92        Iron Plate Boots
+93        Iron Plate Gauntlets
+94        Iron Plate Helmet
+95        Iron Plate Pants
+96        Iron Plate Vest
+97        Iron Shackles
+98        Iron Star Mace
+99        Iron Sword
+100        Iron Tipped Arrow
+101        Iron Wood Cutters Axe
+102        LO Chest
+103        LO Foot
+104        LO Hand
+105        LO Head
+106        LO Leg
+107        Large Gallows
+108        Large Iron Cage
+109        Large Iron Hanging Cage
+110        Leather Crest
+111        Leather Hide
+112        Light Leather Boots
+113        Light Leather Bracers
+114        Light Leather Helmet
+115        Light Leather Pants
+116        Light Leather Vest
+117        Liver
+118        Lockpick
+119        Log Block
+120        Log Ramp
+121        Log Stairs
+122        Long Horn
+123        Male Duck
+124        Meat
+125        Medium Banner
+126        Moose
+127        Oil
+128        Pigeon
+129        PIllory
+130        Plague Villager
+131        Player Sleeper
+132        Potion of Antidote
+133        Potion of Apperance
+134        Rabbit
+135        Rabbit Pelt
+136        Ravens' Hord of Grain
+137        Ravens' Hord of Water
+138        Ravens' Treasure Chest of Clay
+139        Ravens' Treasure Chest of Iron
+140        Ravens' Treasure Chest of Oil
+141        Ravens' Treasure Chest of Stone
+142        Ravens' Treasure Chest of Wood
+143        Raw Bird
+144        Reinforced Wood (Iron) Block
+145        Reinforced Wood (Iron) Door
+146        Reinforced Wood (Iron) Gate
+147        Reinforced Wood (Iron) Ramp
+148        Reinforced Wood (Iron) Stairs
+149        Reinforced Wood (Iron) Door
+150        Repair Hammer
+151        Rooster
+152        Rope
+153        Roses
+154        Sack
+155        Seagull
+156        Sharp Rock
+157        Sheep
+158        Short Hair Black
+159        Short Hair Blond
+160        Short Hair Brown
+161        Siegeworks
+162        Small Banner
+163        Small Gallows
+164        Small Iron Cage
+165        Small Iron Hanging Cage
+166        Small Wall Lantern
+167        Small Wall Torch
+168        Smelter
+169        Smithy
+170        Sod Block
+171        Sod Ramp
+172        Sod Stairs
+173        Splintered Club
+174        Spruce Branches Block
+175        Spruce Branches Ramp
+176        Spruce Branches Stairs
+177        Stag
+178        Standing Iron Torch
+179        Steel Axe
+180        Steel Battle Axe
+181        Steel Bolt
+182        Steel Cage
+183        Steel Chest
+184        Steel Compound
+185        Steel Crest
+186        Steel Dagger
+187        Steel Flanged Mace
+188        Steel Great Sword
+189        Steel Halberd
+190        Steel Hatchet
+191        Steel Ingot
+192        Steel Javelin
+193        Steel Pickaxe
+194        Steel Plate Boots
+195        Steel Plate Gauntlets
+196        Steel Plate Helmet
+197        Steel Plate Pants
+198        Steel Plate Vest
+199        Steel Star Mace
+200        Steel Sword
+201        Steel Tipped Arrow
+202        Steel War Hammer
+203        Steel Wood Cutters Axe
+204        Sticks
+205        Stiff Bed
+206        Stone
+207        Stone Arch
+208        Stone Arrow
+209        Stone Block
+210        Stone Cutter
+211        Stone Dagger
+212        Stone Hatchet
+213        Stone Javelin
+214        Stone Pickaxe
+215        Stone Ramp
+216        Stone Slab
+217        Stone Slit Window
+218        Stone Stairs
+219        Stone Sword
+220        Stone Wood Cutters Axe
+221        Tannery
+222        Tears Of The Gods
+223        Temp Sack
+224        Thatch Block
+225        Thatch Ramp
+226        Thatch Stairs
+227        Throwing Stone
+228        Tinker
+229        Trebuchet
+230        Trebuchet Stone
+231        Wall Lattern
+232        Wall Torch
+233        Water
+234        Well
+235        Werewolf
+236        Whip
+237        Wolf
+238        Wolf Pet
+239        Wood
+240        Wood Arrow
+241        Wood Block
+242        Wood Bracers
+243        Wood Chest
+244        Wood Door
+245        Wood Gate
+246        Wood Helmet
+247        Wood Ramp
+248        Wood Sandals
+249        Wood Shutters
+250        Wood Skirt
+251        Wood Stairs
+252        Wood Vest
+253        Wooden Cage
+254        Wooden Flute
+255        Wooden Javelin
+256        Wooden Mace
+257        Wooden Short Bow
+258        Wool
+259        Work Bench
+
+GodMode:
+Code:
+CodeHatch.Common.PlayerExtensions.Heal(CodeHatch.Engine.Core.Cache.Entity.LocalPlayer.Controller, -1f);
+CodeHatch.Common.PlayerExtensions.ToggleGodMode(CodeHatch.Engine.Core.Cache.Entity.LocalPlayer.Controller);
+
+Fly:
+Code:
+CodeHatch.Networking.Events.Players.PlayerFlyEvent theEvent =
+      new CodeHatch.Networking.Events.Players.PlayerFlyEvent(CodeHatch.Engine.Core.Cache.Entity.LocalPlayer.Controller.Id, fly);
+CodeHatch.Networking.Events.EventManager.CallEvent(theEvent);
+
+
+GiveAll:
+Code:
+/* plz no compiled versions to the masses... */
+/* It will be the end */
+
+        public static void GiveAll(Player p)
+        {
+            InvItemBlueprint[] allDefinedBlueprints = InvBlueprints.Instance.AllDefinedBlueprints;
+            Container containerOfType = p.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
+            if (containerOfType.Contents.MaxSlotCount != 0)
+            {
+                containerOfType.Contents.SetMaxSlotCount(0, true);
+            }
+            int num = 0;
+            for (int i = 0; i < (int)allDefinedBlueprints.Length; i++)
+            {
+                InvItemBlueprint invItemBlueprint = allDefinedBlueprints[i];
+                ContainerManagement containerManagement = invItemBlueprint.TryGet<ContainerManagement>();
+                if (containerManagement != null)
+                {
+                    InvGameItemStack invGameItemStack = new InvGameItemStack(invItemBlueprint, (!containerManagement.Stackable ? 1 : containerManagement.StackLimit), null);
+                    containerOfType.Contents.AddItem(invGameItemStack, true);
+                    num++;
+                }
+            }
+        }
+
+        public static Player GetLocalPlayer()
+        {
+            return Entity.TryGetLocalPlayer().Controller;
+        }
+
+/* to use */
+
+GiveAll(GetLocalPlayer());
+Teleport:
+Code:
+public static void Teleport(Player p, Vector3 position)
+{
+	p.Entity.GetOrCreate<CharacterTeleport>().Teleport(new Vector3(position.x + 1f, position.y + 1f, position.z + 1f));
+}
+
+public static void Teleport(Player p, Player p2)
+{
+	this.Teleport(p, p2.Entity.Position);
+}
