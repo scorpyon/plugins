@@ -107,7 +107,7 @@ namespace Oxide.Plugins
                 PrintToChat(player, "[00FF00]/endallwars [FFFFFF] - End current war on players guild");
                 PrintToChat(player, "[00FF00]/warnokos [FFFFFF] - Toggle player protection for when not in a war");
                 PrintToChat(player, "[00FF00]/warnocrest [FFFFFF] - Toggle crest protection for when not in a war");
-                PrintToChat(player, "[00FF00]/warnobase [FFFFFF] - Toggle crest protection for when not in a war");
+                PrintToChat(player, "[00FF00]/warnobase [FFFFFF] - Toggle base protection for when not in a war");
             }
         }
 
@@ -184,8 +184,7 @@ namespace Oxide.Plugins
                     damageEvent.Damage.Amount > 0 // taking damage
                     && damageEvent.Entity.IsPlayer // entity taking damage is player
                     && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
-                    && damageEvent.Entity != damageEvent.Damage.DamageSource
-                        // entity taking damage is not taking damage from self
+                    && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
                     && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
                     )
                 {
