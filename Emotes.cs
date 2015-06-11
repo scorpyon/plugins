@@ -14,7 +14,7 @@ using CodeHatch.Permissions;
 
 namespace Oxide.Plugins
 {
-    [Info("Emotes", "Scorpyon", "1.0.1")]
+    [Info("Emotes", "Scorpyon", "1.0.2")]
     public class Emotes : ReignOfKingsPlugin
     {
         private const string defaultName = "everyone";

@@ -12,11 +12,11 @@ using Oxide.Core;
 using CodeHatch.Networking.Events.Entities;
 using CodeHatch.Networking.Events.Entities.Players;
 using CodeHatch.Networking.Events.Players;
-
+using CodeHatch.Engine.Core.Cache;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.0.6")]
+    [Info("WarTracker", "Scorpyon", "1.0.7")]
     public class WarTracker : ReignOfKingsPlugin
     {
         //
@@ -29,7 +29,12 @@ namespace Oxide.Plugins
         private const int WarPrepTimeHours = 0;         //
         private const int WarPrepTimeMinutes = 10;      // These are for text purposes to save time on calculations later
         private const int WarPrepTimeSeconds = 0;       //
-
+        // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT PLAYERS TO BE KILLED WHEN AT WAR (Prevents KoS)
+        private const bool noPeaceKilling = true;
+        // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT CRESTS TO BE DAMAGED WHEN AT WAR (Prevents Base Stealing)
+        private const bool noCrestKilling = true;
+        // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT BUILDINGS TO BE DAMAGED WHEN AT WAR (Prevents Base Destruction)
+        private const bool noBaseKilling = true;
 
 
 
@@ -37,6 +42,9 @@ namespace Oxide.Plugins
         // ==================================================================================================
 
         private Collection<Collection<string>> WarList = new Collection<Collection<string>>();
+        // WarList[0] = the war ID
+        // WarList[1] = the instigating Guild name
+        // WarList[2] = the enemy guild name
         private const int WarTimerInterval = 5;
 
         // SAVE DATA ===============================================================================================
@@ -63,6 +71,77 @@ namespace Oxide.Plugins
 
         // ===========================================================================================================
 
+        private bool GuildsAreAtWar(EntityDamageEvent damageEvent)
+        {
+            var player = damageEvent.Damage.DamageSource.Owner;
+            var target = damageEvent.Entity.Owner;
+            var playerGuild = PlayerExtensions.GetGuild(player).Name.ToLower();
+            var targetGuild = PlayerExtensions.GetGuild(target).Name.ToLower();
+
+            foreach (var war in WarList)
+            {
+                if (war[2] == playerGuild && war[1] == targetGuild) return true;
+                if (war[1] == playerGuild && war[2] == targetGuild) return true;
+            }
+
+            return false;
+        }
+
+        // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
+        private void OnEntityHealthChange(EntityDamageEvent damageEvent)
+        {
+           // if (damageEvent.Damage.Amount < 0) return;
+            PrintToChat("Detecting damage");
+            if (noPeaceKilling)
+            {
+                if (
+                    damageEvent.Damage.Amount > 0 // taking damage
+                    && damageEvent.Entity.IsPlayer // entity taking damage is player
+                    && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
+                    && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
+                    && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
+                    )
+                {
+                    PrintToChat("Detecting damage to a player");
+                    damageEvent.Cancel("Can Only Kill When At War");
+                    damageEvent.Damage.Amount = 0f;
+                    PrintToChat(damageEvent.Damage.DamageSource.Owner,
+                        "[FF0000]War General : [FFFFFF]You cannot attack another person when you are not at war with them!");
+                }
+            }
+            if (noCrestKilling)
+            {
+                // Make sure it's not a player with a clever name! 
+                if (!damageEvent.Entity.IsPlayer)
+                {
+                    if (damageEvent.Entity.name.Contains("Crest"))
+                    {
+                        PrintToChat("Detecting damage to a crest");
+                        damageEvent.Cancel("Can Only Break Crests When At War");
+                        damageEvent.Damage.Amount = 0f;
+                        PrintToChat(damageEvent.Damage.DamageSource.Owner,
+                            "[FF0000]War General : [FFFFFF]You cannot break another guild's crest when you are not at war with them!");
+                    }
+                }
+            }
+            if (noBaseKilling)
+            {
+                // Make sure it's not a player with a clever name! 
+                if (!damageEvent.Entity.IsPlayer)
+                {
+                    if (damageEvent.Entity.name.Contains("Block") || damageEvent.Entity.name.Contains("Ramp") ||
+                        damageEvent.Entity.name.Contains("Stairs") || damageEvent.Entity.name.Contains("Door") ||
+                        damageEvent.Entity.name.Contains("Gate"))
+                    {
+                        PrintToChat("Detecting damage to a block");
+                        damageEvent.Cancel("Can Only Attack Bases When At War");
+                        damageEvent.Damage.Amount = 0f;
+                        PrintToChat(damageEvent.Damage.DamageSource.Owner,
+                            "[FF0000]War General : [FFFFFF]You cannot attack another guild's base when you are not at war with them!");
+                    }
+                }
+            }
+        }
 
         private void WarReport()
         {
