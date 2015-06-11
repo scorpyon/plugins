@@ -214,15 +214,23 @@ namespace Oxide.Plugins
         {
             if (noBaseKilling)
             {
-                var myGuild = PlayerExtensions.GetGuild(cubeDamageEvent.Damage.DamageSource.Owner).Name;
-                var blockGuild = PlayerExtensions.GetGuild(cubeDamageEvent.Entity.Owner).Name;
-
-                if (myGuild != blockGuild)
+				var player = cubeDamageEvent.Damage.DamageSource.Owner;
+				var isAtWar = false;
+				
+				foreach(var war in WarList)
+				{
+					if(war[1].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower() || war[2].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower())
+					{
+						isAtWar = true;
+					}
+				}
+				
+				if (!isAtWar)
                 {
                     cubeDamageEvent.Cancel("Can Only Attack Bases When At War");
                     cubeDamageEvent.Damage.Amount = 0f;
                     PrintToChat(cubeDamageEvent.Damage.DamageSource.Owner,
-                        "[FF0000]War General : [FFFFFF]You cannot attack another guild's items when you are not at war with them!");
+                        "[FF0000]War General : [FFFFFF]You cannot attack a base when you are not at war with a guild!");
                 }
             }
         }

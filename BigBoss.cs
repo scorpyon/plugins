@@ -51,7 +51,7 @@ namespace Oxide.Plugins
 			
 			//Set the player to be the boss
 			SetTheBoss(targetPlayer);
-			PrintToChat("[FF0000]Raid[FFFFFF] : " + targetPlayer.DisplayName + " has been turned into a devastating enemy by the Gods! Kill them quick!");
+			PrintToChat("[FF0000]Raid[FFFFFF] : " + targetPlayer.DisplayName + " has been turned into a devastating evil knight by the Gods! Kill them quick!");
         }
 		
 		
@@ -66,6 +66,7 @@ namespace Oxide.Plugins
 			
 			//Reset the boss variable to null
 			theBoss = null;
+			PrintToChat("[FF0000]Raid[FFFFFF] : The evil knight has been reduced to a mere mortal once more.");
 		}
 		
 		private void SetTheBoss(Player player)
@@ -104,7 +105,7 @@ namespace Oxide.Plugins
 						&& damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
 						&& damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
 				){
-					PrintToChat(attacker, "[FF0000]Raid[FFFFFF] : Your foe deals you a scathing blow!");
+					PrintToChat(attacker, "[FF0000]Raid[FFFFFF] : Your foe deals you a devastating! blow!");
 					damageEvent.Damage.Amount = damageEvent.Damage.Amount * (damageIncrease/100);
 				}		
 			}
