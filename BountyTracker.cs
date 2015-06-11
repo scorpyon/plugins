@@ -24,6 +24,21 @@ namespace Oxide.Plugins
     [Info("Bounty Tracker", "Scorpyon", "1.0.1")]
     public class BountyTracker : ReignOfKingsPlugin
     {
+        // ===========================================================================================================
+        // ===========================================================================================================
+        
+        // LIST OF COMMANDS :
+        // /setbountyname <player_name>         - sets the name of the bounty target
+        // /setbountyresource <resource_name>   - sets the bounty resource
+        // /setbountyamount <resource_amount>   - sets the resource amount
+        // /setbounty                           - Confirms the bounty
+        // /bounties                            - View all active bounties on players
+
+        // /resetbounty (Admin only)            - Removes all bounties (active and in setup)
+
+        // ===========================================================================================================
+        // ===========================================================================================================
+        
         private Collection<string[]> bountyList = new Collection<string[]>();
         void Log(string msg) => Puts($"{Title} : {msg}");
 
