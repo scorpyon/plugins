@@ -28,10 +28,7 @@ namespace Oxide.Plugins
         // ===========================================================================================================
         
         // LIST OF COMMANDS :
-        // /setbountyname <player_name>         - sets the name of the bounty target
-        // /setbountyresource <resource_name>   - sets the bounty resource
-        // /setbountyamount <resource_amount>   - sets the resource amount
-        // /setbounty                           - Confirms the bounty
+        // /setbounty                           - Set up the bounty
         // /bounties                            - View all active bounties on players
 
         // /resetbounty (Admin only)            - Removes all bounties (active and in setup)
@@ -63,83 +60,6 @@ namespace Oxide.Plugins
         // ===========================================================================================================
 
 
-        //[ChatCommand("testremove")]
-        //private void TestRemovalScript(Player player, string cmd)
-        //{
-			// if (!player.HasPermission("admin"))
-				// {
-					// PrintToChat(player, "Only an admin can use this command.");
-					// return;
-				// }
-        //    var inventory = player.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
-        //    var item = "Wood";
-        //    var amount = 600;
-        //    RemoveItemsFromInventory(player, item, amount);
-        //}
-		
-		
-		// [ChatCommand("testbounty")]
-        // private void TestBountySingleAddition(Player player, string cmd)
-        // {
-			// if (!player.HasPermission("admin"))
-            // {
-                 // PrintToChat(player, "Only an admin can use this command.");
-                 // return;
-            // }
-			// bountyList = new Collection<string[]>();
-		
-            // var testBounty = new string[]{ "scorpyon", "lord bob", "Wood", "999", "active"};
-			// bountyList.Add(testBounty);
-			// PrintToChat("Test bounties added.");
-		// }
-		
-		// [ChatCommand("testbountylist")]
-        // private void TestBountyList(Player player, string cmd)
-        // {
-			// if (!player.HasPermission("admin"))
-            // {
-                 // PrintToChat(player, "Only an admin can use this command.");
-                 // return;
-            // }
-			// bountyList = new Collection<string[]>();
-		
-            // var testBounty = new string[]{ "Hunter", "lord bob", "Wood", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Lord Night", "lord bob", "Stone", "234", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "The Dark One", "lord bob", "Wood", "1000", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Maximus", "Painboy", "Iron", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "The Hero", "The Villain", "Iron Ingot", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "The Villain", "Your Mum", "Steel Ingot", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Sam", " Bob", "Flax", "254", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Another Guy", "The other guy", "Wood", "99", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ " Shady Guy", "lord bob", "Iron", "2", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ " The Hero", "Bob", "Wood", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "The Villain", "lord bob", "Wood", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Richie Rich", "Sammy the Squib", "Wood", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Prey", "lord bob", "Steel Ingot", "999", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Hunter", " Mr Magic", "Flax", "254", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Maximus", "Squirnoogle", "Wood", "99", "active"};
-			// bountyList.Add(testBounty);
-            // testBounty = new string[]{ "Dark Soul", "Reaper Man", "Iron", "2", "active"};
-			// bountyList.Add(testBounty);
-			
-			// PrintToChat("Test bounties added.");
-        // }
-		
-		
 		
         // SEE THE CURRENT BOUNTY LIST
         [ChatCommand("bounties")]
@@ -169,65 +89,23 @@ namespace Oxide.Plugins
                 if(count == 0) message = "There are currently no bounties available.";
             }
 
-            player.ShowPopup(title,message);
+            player.ShowPopup(title,message,"Ok",  (selection, dialogue, data) => ClosePopup(player, selection, dialogue, data));
         }
+		
+		private void ClosePopup(Player player, Options selection, Dialogue dialogue, object contextData)
+		{
+			//Do nothing
+		}
 
-
+		
+		//SET THE BOUNTY
         [ChatCommand("setbounty")]
         private void SetTheFinalBountyOnThePlayer(Player player, string cmd)
         {
             var playerName = player.Name;
 
-            // Check if there is a bounty waiting to be set
-            foreach(var bounty in bountyList)
-            {
-                if(bounty[0] == playerName.ToLower())
-                {
-                    // Is it awaiting the active state?
-                    if(bounty[4] != "active")
-                    {
-                        //Check all fields are filled in
-                        if(bounty[1] == "")
-                        {
-                            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You must use [00FF00]/setbountyname [FF00FF]<playername> [FFFFFF]to choose who to set your bounty on.");
-                            return;
-                        }
-
-                        if(bounty[2] == "")
-                        {
-                            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You must use [00FF00]/setbountyresource [FF00FF]<resource> [FFFFFF]to choose what resource to offer as a reward.");
-                            return;
-                        }
-
-                        if(bounty[3] == "")
-                        {
-                            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You must use [00FF00]/setbountyamount [FF00FF]<amount> [FFFFFF]to choose how much of the reward resource you want to offer.");
-                            return;
-                        }
-
-                        // Make sure the player has enough resource for this!
-                        if(!PlayerHasTheResources(player, bounty[2], bounty[3])) 
-                        {
-                            PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : You do not have the resources for this bounty in your inventory!");
-                            return;
-                        }
-
-                        // Remove the resource
-                        int bountyAmount = Int32.Parse(bounty[3]); 
-                        RemoveItemsFromInventory(player, bounty[2], bountyAmount);
-
-                        PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : Setting up bounty...");
-                        SaveBountyListData();
-                        AskThePlayerToConfirmTheBounty(player, bounty[0], bounty[1], bounty[2], bounty[3]);
-                        return;
-                    }
-                }
-            }
-
-            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : To set a bounty, use the following commands: [00FF00]/setbountyname [FF00FF]<player_name>[FFFFFF], [00FF00]/setbountyresource [FF00FF]<resource>[FFFFFF], [00FF00]/setbountyamount [FF00FF]<amount> [00FFFF](Max 1k), [00FF00]/setbounty [00FFFF](Confirms the bounty to begin)");
-
-            // Save the data
-            SaveBountyListData();
+            // Open the new and shiny popup menu!
+			player.ShowInputPopup("Set Bounty Details", "Who do you want to set a bounty on?", "", "Confirm", "Cancel", (options, dialogue1, data) => SetBountyPlayerName(player, options, dialogue1, data));
         }
         
         public void RemoveItemsFromInventory(Player player, string resource, int amount)
@@ -257,12 +135,18 @@ namespace Oxide.Plugins
             }
         }
 
-        private void ConfirmTheBounty(Player player, string playerName, string bountyName, string bountyResource, string bountyAmount)
+        private void ConfirmTheBounty(Player player, Options selection, Dialogue dialogue, object contextData, string playerName, string bountyName, string bountyResource, string bountyAmount)
         {
-            var guild = PlayerExtensions.GetGuild(player).Name;
+			if (selection != Options.Yes)
+            {
+                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have cancelled the bounty request.");
+                return;
+            }
+			            
+			var guild = PlayerExtensions.GetGuild(player).Name;
             PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName + "[FFFFFF] of [FF00FF]" + Capitalise(guild) + "[FFFFFF] has set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]!");
 
-            // Confirm the bonty in the list
+            // Confirm the bounty in the list
             foreach(var bounty in bountyList)
             {
                 if(bounty[0] == playerName.ToLower() && bounty[1] == bountyName.ToLower() && bounty[2] == bountyResource && bounty[3] == bountyAmount)
@@ -291,28 +175,25 @@ namespace Oxide.Plugins
         }
         
         //SETTING A BOUNTY AMOUNT
-        [ChatCommand("setbountyamount")]
-        private void SetBountyAmountOfResource(Player player, string cmd, string[] input)
+        private void SetBountyAmountOfResource(Player player, Options selection, Dialogue dialogue, object contextData)
         {
-            var playerName = player.Name.ToLower();
-
-            //Check player has entered the commands correctly
-            if (input.Length == 0)
+			if (selection == Options.Cancel || dialogue.ValueMessage.Length == 0)
             {
-                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : To set a bounty, use the following commands: [00FF00]/setbountyname [FF00FF]<player_name>[FFFFFF], [00FF00]/setbountyresource [FF00FF]<resource>[FFFFFF], [00FF00]/setbountyamount [FF00FF]<amount> [00FFFF](Max 1k), [00FF00]/setbounty [00FFFF](Confirms the bounty to begin)");
+                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have cancelled the bounty request.");
                 return;
             }
+			
+            var playerName = player.Name.ToLower();
 
             // Convert to a single string (in case of many args)
-            var amountEntered = ConvertArrayToString(input);
+            var amountEntered = dialogue.ValueMessage;
 
             // Make sure that a Number was entered
             int amount;
             bool acceptable = Int32.TryParse(amountEntered, out amount);
             if(!acceptable)
             {
-                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : That amount was not recognised.");
-                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : To set a bounty, use the following commands: [00FF00]/setbountyname [FF00FF]<player_name>[FFFFFF], [00FF00]/setbountyresource [FF00FF]<resource>[FFFFFF], [00FF00]/setbountyamount [FF00FF]<amount> [00FFFF](Max 1k), [00FF00]/setbounty [00FFFF](Confirms the bounty to begin)");
+                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : That amount was not recognised. The bounty request was cancelled.");
                 return;
             }
 
@@ -332,8 +213,12 @@ namespace Oxide.Plugins
                     {
                         // Add the resource to the existing bounty request
                         bounty[3] = amount.ToString();
-                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have set the amount to [00FF00]" + amount.ToString() + "[FFFFFF] for the bounty you are creating. If you have added a name and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have set the amount to [00FF00]" + amount.ToString() + "[FFFFFF] for the bounty you are creating.");
                         SaveBountyListData();
+						
+						// Load the next Popup!
+						AskThePlayerToConfirmTheBounty(player, bounty[0], bounty[1], bounty[2], bounty[3]);
+
                         return;
                     }
                 }
@@ -350,30 +235,32 @@ namespace Oxide.Plugins
             bountyList[lastRecord][3] = amount.ToString();
 
             // Tell the player
-             PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have set the amount to [00FF00]" + amount.ToString() + "[FFFFFF] for the bounty you are creating. If you have added a name and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+             PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have set the amount to [00FF00]" + amount.ToString() + "[FFFFFF] for the bounty you are creating.");
 
             //// Save the data
             SaveBountyListData();
-        }
+
+			// Load the next Popup!
+			AskThePlayerToConfirmTheBounty(player, bountyList[lastRecord][0], bountyList[lastRecord][1], bountyList[lastRecord][2], bountyList[lastRecord][3]);
+
+		}
 
 
 
         //SETTING A BOUNTY RESOURCE
-        [ChatCommand("setbountyresource")]
-        private void SetBountyResourceType(Player player, string cmd, string[] input)
+        private void SetBountyResourceType(Player player, Options selection, Dialogue dialogue, object contextData)
         {
-            //Check player has entered the commands correctly
-            if (input.Length == 0)
+			if (selection == Options.Cancel || dialogue.ValueMessage.Length == 0)
             {
-                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : To set a bounty, use the following commands: [00FF00]/setbountyname [FF00FF]<player_name>[FFFFFF], [00FF00]/setbountyresource [FF00FF]<resource>[FFFFFF], [00FF00]/setbountyamount [FF00FF]<amount> [00FFFF](Max 1k), [00FF00]/setbounty [00FFFF](Confirms the bounty to begin)");
+                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have cancelled the bounty request.");
                 return;
             }
-
+			
             // Check who is setting the bounty
             var playerName = player.Name;
 
             // Get resource
-            var resourceName = ConvertArrayToString(input);
+            var resourceName = Capitalise(dialogue.ValueMessage);
 
             if(resourceName != "Wood" && 
                 resourceName != "Stone" && 
@@ -391,7 +278,7 @@ namespace Oxide.Plugins
                 resourceName != "Clay" && 
                 resourceName != "Oil")
             {
-                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : I am afraid that you cannot use that item as a bounty reward at this time. Please remember that resource names are [ff0000]case sensitive[ffffff] and must start with a capital letter.");
+                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : I am afraid that you cannot use that item as a bounty reward at this time. Only harvestable resources may be used.");
                 return;
             }
 
@@ -404,8 +291,12 @@ namespace Oxide.Plugins
                     {
                         // Add the resource to the existing bounty request
                         bounty[2] = resourceName;
-                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added the resource [00FF00]" + resourceName + "[FFFFFF] to the bounty you are creating. If you have added a name and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added the resource [00FF00]" + resourceName + "[FFFFFF] to the bounty you are creating.");
                         SaveBountyListData();
+
+						// Load the next Popup!
+						player.ShowInputPopup("Set Bounty Details", "How much of that resource are you offering as a reward?", "", "Confirm", "Cancel", (options, dialogue1, data) => SetBountyAmountOfResource(player, options, dialogue1, data));
+
                         return;
                     }
                 }
@@ -422,38 +313,35 @@ namespace Oxide.Plugins
             bountyList[lastRecord][2] = resourceName;
 
             // Tell the player
-            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added the resource [00FF00]" + resourceName + "[FFFFFF] to the bounty you are creating. If you have added a name and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added the resource [00FF00]" + resourceName + "[FFFFFF] to the bounty you are creating.");
 
             // Save the data
             SaveBountyListData();
+			
+			// Load the next Popup!
+			player.ShowInputPopup("Set Bounty Details", "How much of that resource are you offering as a reward?", "", "Confirm", "Cancel", (options, dialogue1, data) => SetBountyAmountOfResource(player, options, dialogue1, data));
         }
 
 
 
         // SETTING A BOUNTY NAME
-        [ChatCommand("setbountyname")]
-        private void SetBountyPlayerName(Player player, string cmd, string[] input)
+        private void SetBountyPlayerName(Player player, Options selection, Dialogue dialogue, object contextData)
         {
-            var bountyPlayerName = "";
-
-            //Check player has entered the commands correctly
-            if (input.Length == 0)
+			if (selection == Options.Cancel || dialogue.ValueMessage.Length == 0)
             {
-                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : To set a bounty, use the following commands: [00FF00]/setbountyname [FF00FF]<player_name>[FFFFFF], [00FF00]/setbountyresource [FF00FF]<resource>[FFFFFF], [00FF00]/setbountyamount [FF00FF]<amount> [00FFFF](Max 1k), [00FF00]/setbounty [00FFFF](Confirms the bounty to begin)");
+                PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have cancelled the bounty request.");
                 return;
             }
+            var bountyPlayerName = dialogue.ValueMessage;
 
             // Check who is setting the bounty
             var playerName = player.Name;
-
-            // Get target's name
-            bountyPlayerName = ConvertArrayToString(input);
 
             // Check that the bounty target is online
             Player bountyPlayer = Server.GetPlayerByName(bountyPlayerName.ToLower());
 
             //Check that this player can be found
-            if (bountyPlayer == null)
+            if (bountyPlayerName == "" || bountyPlayer == null)
             {
                 PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : That person is not currently available. You must wait until they awaken to set a bounty on their head, my Lord.");
                 return;
@@ -466,14 +354,10 @@ namespace Oxide.Plugins
                 {   
                     if(bounty[1] == bountyPlayerName.ToLower())
                     {
+						// If there is already a bounty on the player from me
                         if(bounty[4] == "active")
                         {
                             PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have already set an active bounty on that person's head, my Lord!");
-                            return;
-                        }
-                        else
-                        {
-                            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have already added that person's name to the bounty you are creating. If you have added a resource and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
                             return;
                         }
                     }
@@ -483,7 +367,7 @@ namespace Oxide.Plugins
                         bounty[1] = bountyPlayerName.ToLower();
 
                         // Tell the player
-                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating. If you have added a resource and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating.");
 
                         // Save the data
                         SaveBountyListData();
@@ -504,10 +388,13 @@ namespace Oxide.Plugins
             bountyList[lastRecord][1] = bountyPlayerName.ToLower();
 
             // Tell the player
-            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating. If you have added a resource and amount, use [00FF00]/setbounty [FFFFFF]to confirm it.");
+            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating.");
 
             // Save the data
             SaveBountyListData();
+			
+			// Load the next Popup!
+			player.ShowInputPopup("Set Bounty Details", "What resource are you offering as a reward?", "", "Confirm", "Cancel", (options, dialogue1, data) => SetBountyResourceType(player, options, dialogue1, data));
         }
 
         
@@ -645,18 +532,9 @@ namespace Oxide.Plugins
 
         private void AskThePlayerToConfirmTheBounty(Player player, string playerName, string bountyName, string bountyResource, string bountyAmount)
         {
-            var title = "Bounty Declared!";
-            var message = "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]!";
-            var confirmText = "Make it so!";
-            var cancelText = "Actually, no...";
-            bool interupt = false;
-            bool broadcast = false;
 
-            player.ShowPopup(title,message);
-            //PlayerExtensions.ShowConfirmPopup(player,title,message,"Let's do it!","Nope!",ConfirmTheBounty(player, playerName, bountyName, bountyResource, bountyAmount));
-
-            // TEMPORARY FIX 
-            ConfirmTheBounty(player, playerName, bountyName, bountyResource, bountyAmount);
+			// Load the next Popup!
+			player.ShowConfirmPopup("Set Bounty Details", "[FFFFFF]You have set a bounty reward of [FF0000]" + bountyAmount + " " + bountyResource + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyName) + "[FFFFFF]! Confirm the bounty?", "Make it so!", "Actually, no!", (selection, dialogue, data) => ConfirmTheBounty(player, selection, dialogue, data, playerName, bountyName, bountyResource, bountyAmount));
         }
 
 
