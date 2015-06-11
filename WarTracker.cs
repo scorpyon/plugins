@@ -30,9 +30,9 @@ namespace Oxide.Plugins
         private const int WarPrepTimeMinutes = 10;      // These are for text purposes to save time on calculations later
         private const int WarPrepTimeSeconds = 0;       //
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT PLAYERS TO BE KILLED WHEN AT WAR (Prevents KoS)
-        private const bool noPeaceKilling = true;
+        private bool noPeaceKilling = true;
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT CRESTS TO BE DAMAGED WHEN AT WAR (Prevents Base Stealing)
-        private const bool noCrestKilling = true;
+        private bool noCrestKilling = true;
         
         
         
@@ -57,11 +57,15 @@ namespace Oxide.Plugins
 		private void LoadWarData()
 		{
             WarList = Interface.GetMod().DataFileSystem.ReadObject<Collection<Collection<string>>>("SavedWarList");
-		}
+            noPeaceKilling = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedWarListNoPeace");
+            noCrestKilling = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedWarListNoCrest");
+        }
 
         private void SaveWarListData()
         {
             Interface.GetMod().DataFileSystem.WriteObject("SavedWarList", WarList);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedWarListNoPeace", noPeaceKilling);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedWarListNoCrest", noCrestKilling);
         }
         
         void Loaded()
@@ -90,6 +94,48 @@ namespace Oxide.Plugins
             }
 
             return false;
+        }
+
+        // Toggle KoS Rules
+        [ChatCommand("warnokos")]
+        private void ToggleNoKoS(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only an admin may use this command!");
+                return;
+            }
+            if (noPeaceKilling)
+            {
+                noPeaceKilling = false;
+                SaveWarListData();
+                PrintToChat(player, "Players can now kill on sight!");
+                return;
+            }
+            noPeaceKilling = true;
+            SaveWarListData();
+            PrintToChat(player, "Players can no longer kill unless at war!");
+        }
+
+        // Toggle Crest breaking rules
+        [ChatCommand("warnocrest")]
+        private void ToggleNoCrestKill(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only an admin may use this command!");
+                return;
+            }
+            if (noCrestKilling)
+            {
+                noCrestKilling = false;
+                SaveWarListData();
+                PrintToChat(player, "Players can now break crests at any time!");
+                return;
+            }
+            noCrestKilling = true;
+            SaveWarListData();
+            PrintToChat(player, "Players can no longer break crests unless at war!");
         }
 
         // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
