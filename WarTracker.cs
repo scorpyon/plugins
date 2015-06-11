@@ -13,6 +13,7 @@ using CodeHatch.Networking.Events.Entities;
 using CodeHatch.Networking.Events.Entities.Players;
 using CodeHatch.Networking.Events.Players;
 using CodeHatch.Engine.Core.Cache;
+using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
@@ -33,11 +34,8 @@ namespace Oxide.Plugins
         private bool noPeaceKilling = true;
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT CRESTS TO BE DAMAGED WHEN AT WAR (Prevents Base Stealing)
         private bool noCrestKilling = true;
-        
-        
-        
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT BUILDINGS TO BE DAMAGED WHEN AT WAR (Prevents Base Destruction)
-        //private const bool noBaseKilling = true; //(Currently Not Working - disregard for now...)
+        private bool noBaseKilling = true; //(Currently Not Working - disregard for now...)
 
 
 
@@ -109,6 +107,7 @@ namespace Oxide.Plugins
                 PrintToChat(player, "[00FF00]/endallwars [FFFFFF] - End current war on players guild");
                 PrintToChat(player, "[00FF00]/warnokos [FFFFFF] - Toggle player protection for when not in a war");
                 PrintToChat(player, "[00FF00]/warnocrest [FFFFFF] - Toggle crest protection for when not in a war");
+                PrintToChat(player, "[00FF00]/warnobase [FFFFFF] - Toggle crest protection for when not in a war");
             }
         }
 
@@ -154,6 +153,27 @@ namespace Oxide.Plugins
             PrintToChat(player, "Players can no longer break crests unless at war!");
         }
 
+        // Toggle Base Rules
+        [ChatCommand("warnobase")]
+        private void ToggleNoBase(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only an admin may use this command!");
+                return;
+            }
+            if (noBaseKilling)
+            {
+                noBaseKilling = false;
+                SaveWarListData();
+                PrintToChat(player, "Players can now attack other players' bases at will!");
+                return;
+            }
+            noBaseKilling = true;
+            SaveWarListData();
+            PrintToChat(player, "Players can no longer attack bases unless at war!");
+        }
+
         // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
         private void OnEntityHealthChange(EntityDamageEvent damageEvent)
         {
@@ -164,7 +184,8 @@ namespace Oxide.Plugins
                     damageEvent.Damage.Amount > 0 // taking damage
                     && damageEvent.Entity.IsPlayer // entity taking damage is player
                     && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
-                    && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
+                    && damageEvent.Entity != damageEvent.Damage.DamageSource
+                        // entity taking damage is not taking damage from self
                     && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
                     )
                 {
@@ -188,22 +209,23 @@ namespace Oxide.Plugins
                     }
                 }
             }
-            //if (noBaseKilling)
-            //{
-            //    // Make sure it's not a player with a clever name! 
-            //    if (!damageEvent.Entity.IsPlayer)
-            //    {
-            //        if (damageEvent.Entity.name.Contains("Block") || damageEvent.Entity.name.Contains("Ramp") ||
-            //            damageEvent.Entity.name.Contains("Stairs") || damageEvent.Entity.name.Contains("Door") ||
-            //            damageEvent.Entity.name.Contains("Gate"))
-            //        {
-            //            damageEvent.Cancel("Can Only Attack Bases When At War");
-            //            damageEvent.Damage.Amount = 0f;
-            //            PrintToChat(damageEvent.Damage.DamageSource.Owner,
-            //                "[FF0000]War General : [FFFFFF]You cannot attack another guild's base when you are not at war with them!");
-            //        }
-            //    }
-            //}
+        }
+
+        private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
+        {
+            if (noBaseKilling)
+            {
+                var myGuild = PlayerExtensions.GetGuild(cubeDamageEvent.Damage.DamageSource.Owner).Name;
+                var blockGuild = PlayerExtensions.GetGuild(cubeDamageEvent.Entity.Owner).Name;
+
+                if (myGuild != blockGuild)
+                {
+                    cubeDamageEvent.Cancel("Can Only Attack Bases When At War");
+                    cubeDamageEvent.Damage.Amount = 0f;
+                    PrintToChat(cubeDamageEvent.Damage.DamageSource.Owner,
+                        "[FF0000]War General : [FFFFFF]You cannot attack another guild's items when you are not at war with them!");
+                }
+            }
         }
 
         private void WarReport()
