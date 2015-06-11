@@ -7,6 +7,7 @@ namespace Oxide.Plugins
     {
         //private void OnEntityHealthChange(EntityDamageEvent damageEvent)
         //{
+        //    PrintToChat("Damage event detected");
         //    if (damageEvent.Damage.Amount < 0) return;
         //    if (!damageEvent.Entity.name.Contains("Crest")) return;
         //    damageEvent.Cancel("No damage to crest");

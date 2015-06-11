@@ -16,7 +16,7 @@ using CodeHatch.Engine.Core.Cache;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.0.7")]
+    [Info("WarTracker", "Scorpyon", "1.0.8")]
     public class WarTracker : ReignOfKingsPlugin
     {
         //
@@ -94,6 +94,22 @@ namespace Oxide.Plugins
             }
 
             return false;
+        }
+
+        // LIST WAR COMMANDS
+        [ChatCommand("warcommands")]
+        private void ListAllAllianceCommands(Player player, string cmd)
+        {
+            PrintToChat(player, "[FF0000]War Organiser[FFFFFF] : Use the following commands for Wars :");
+            PrintToChat(player, "[00FF00]/declarewar [FF00FF]<player_name> [FFFFFF] - Declare war on players guild");
+            PrintToChat(player, "[00FF00]/warreport [FFFFFF] - View all active wars");
+            if (player.HasPermission("admin"))
+            {
+                PrintToChat(player, "[00FF00]/endwar [FF00FF]<player_name> [FFFFFF] - End current war on players guild");
+                PrintToChat(player, "[00FF00]/endallwars [FFFFFF] - End current war on players guild");
+                PrintToChat(player, "[00FF00]/warnokos [FFFFFF] - Toggle player protection for when not in a war");
+                PrintToChat(player, "[00FF00]/warnocrest [FFFFFF] - Toggle crest protection for when not in a war");
+            }
         }
 
         // Toggle KoS Rules
