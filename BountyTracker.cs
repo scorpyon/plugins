@@ -21,7 +21,7 @@ using CodeHatch.Inventory.Blueprints.Components;
 
 namespace Oxide.Plugins
 {
-    [Info("Bounty Tracker", "Scorpyon", "1.0.2")]
+    [Info("Bounty Tracker", "Scorpyon", "1.0.3")]
     public class BountyTracker : ReignOfKingsPlugin
     {
         // ===========================================================================================================
@@ -146,10 +146,10 @@ namespace Oxide.Plugins
 			var guild = PlayerExtensions.GetGuild(player).DisplayName;
 
             // Confirm the bounty in the list
-			var bountyDetails = new string[5];
+            //var bountyDetails = new string[5];
             foreach(var bounty in bountyList)
             {
-                if(bounty[0] == player.Name.ToLower())
+                if(bounty[0] == player.Name.ToLower() && bounty[4] != "active")
                 {
 					// Make sure the player has enough resource for this!
 					if(!PlayerHasTheResources(player, bounty[2], bounty[3])) 
@@ -166,12 +166,12 @@ namespace Oxide.Plugins
 					
                     bounty[4] = "active";
 					
-					for(var i=0;i<bounty.Length;i++)
-					{
-						bountyDetails[i] = bounty[i].ToString();
-					}
+                    //for(var i=0;i<bounty.Length;i++)
+                    //{
+                    //    bountyDetails[i] = bounty[i].ToString();
+                    //}
 
-					PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName.ToString() + "[FFFFFF] of [FF00FF]" + Capitalise(guild) + "[FFFFFF] has set a bounty reward of [FF0000]" + bountyDetails[3].ToString() + " " + bountyDetails[2].ToString() + "[FFFFFF] for the death of [00FF00]" + Capitalise(bountyDetails[1].ToString()) + "[FFFFFF]!");
+					PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName.ToString() + "[FFFFFF] of [FF00FF]" + Capitalise(guild) + "[FFFFFF] has set a bounty reward of [FF0000]" + bounty[3].ToString() + " " + bounty[2].ToString() + "[FFFFFF] for the death of [00FF00]" + Capitalise(bounty[1].ToString()) + "[FFFFFF]!");
 
                 }
             }
