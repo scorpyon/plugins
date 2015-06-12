@@ -21,7 +21,7 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.0.1")]
+    [Info("Trade Tracker", "Scorpyon", "1.0.2")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
@@ -82,8 +82,6 @@ namespace Oxide.Plugins
         void Loaded()
         {
             LoadTradeData();
-			
-			tradeList = new Collection<string[]>();
 
             //If there's no trade data stored, then set up the new trade data from the defaults
             if(tradeList.Count < 1)
@@ -321,6 +319,7 @@ namespace Oxide.Plugins
 			AdjustMarketPrices("sell", resourceDetails[0] ,amount);
 			
 			// Tell the player
+			PrintToChat(player,"[FF0000]Grand Exchange[FFFFFF] : " + amount.ToString() + " " + resourceDetails[0] + "has been removed from your inventory and your wallet has been credited for the sale.");
 			PrintToChat(player,"[FF0000]Grand Exchange[FFFFFF] : Thanks for your custom, friend! Please come again!");
 			
 			//Save the data
@@ -407,6 +406,7 @@ namespace Oxide.Plugins
 			AdjustMarketPrices("buy", resourceDetails[0] ,amount);
 			
 			// Tell the player
+			PrintToChat(player,"[FF0000]Grand Exchange[FFFFFF] : " + amount.ToString() + " " + resourceDetails[0] + "has been added to your inventory and your wallet has been debited the appropriate amount.");
 			PrintToChat(player,"[FF0000]Grand Exchange[FFFFFF] : Congratulations on your purchase. Please come again!");
 			
 			//Save the data
@@ -552,18 +552,6 @@ namespace Oxide.Plugins
 				var buyPriceText = buyPrice.ToString();
 				var sellPriceText = sellPrice.ToString();
 				
-                // var buyDiff = originalPrice + (buyPrice - originalPrice);
-                // var buyPriceText = buyDiff.ToString();
-                // if(buyDiff == 0) buyPriceText = "";
-                // var sellDiff = sellPrice + (sellPrice - originalPrice);
-                // var sellPriceText = sellDiff.ToString();
-                // if(sellDiff == 0) sellPriceText = "";
-
-                //Has the price modulated?
-                // if(buyDiff > originalPrice) buyIcon = "[FF0000]";
-                // if(buyDiff < originalPrice) buyIcon = "[00FF00]";
-                // if(sellDiff > originalPrice) sellIcon = "[FF0000]";
-                // if(sellDiff < originalPrice) sellIcon = "[00FF00]";
 				
                 itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
             }
@@ -613,26 +601,6 @@ namespace Oxide.Plugins
 				var buyPriceText = buyPrice.ToString();
 				var sellPriceText = sellPrice.ToString();
 				
-				// buyIcon = "[008888]";
-				// sellIcon = "[008888]";
-                // var resource = tradeList[i][0];
-                // var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
-                // var stackLimit = Int32.Parse(tradeList[i][2]) / priceModifier;
-                // var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
-                // var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
-
-                // var buyDiff = originalPrice + (buyPrice - originalPrice);
-                // var buyPriceText = buyDiff.ToString();
-                // if(buyDiff == 0) buyPriceText = "";
-                // var sellDiff = sellPrice -  + (sellPrice - originalPrice);
-                // var sellPriceText = sellDiff.ToString();
-                // if(sellDiff == 0) sellPriceText = "";
-
-                // //Has the price modulated?
-                // if(buyDiff > originalPrice) buyIcon = "[FF0000]";
-                // if(buyDiff < originalPrice) buyIcon = "[00FF00]";
-                // if(sellDiff > originalPrice) sellIcon = "[FF0000]";
-                // if(sellDiff < originalPrice) sellIcon = "[00FF00]";
 
                 itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
             }
