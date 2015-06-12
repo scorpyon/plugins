@@ -1,31 +1,16 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Collections;
-using System.Collections.ObjectModel;
-using System.Timers;
-using CodeHatch.Engine.Networking;
-using CodeHatch.Engine.Core.Networking;
-using CodeHatch.Thrones.SocialSystem;
-using CodeHatch.Common;
-using CodeHatch.Permissions;
-using Oxide.Core;
-using CodeHatch.Networking.Events;
-using CodeHatch.Networking.Events.Entities;
-using CodeHatch.Networking.Events.Entities.Players;
-using CodeHatch.Networking.Events.Players;
-using CodeHatch.ItemContainer;
-using CodeHatch.UserInterface.Dialogues;
-using CodeHatch.Inventory.Blueprints.Components;
+ using System;
+ using CodeHatch.Engine.Networking;
+ using CodeHatch.Common;
+ using CodeHatch.Networking.Events.Entities;
 
 
 namespace Oxide.Plugins
 {
-    [Info("BigBoss", "Scorpyon", "1.0.1")]
+    [Info("BigBoss", "Scorpyon", "1.0.2")]
     public class BigBoss : ReignOfKingsPlugin
     {
-		private const int damageReduction = 10; // Percentageto reduce damage against the boss. Use 1 - 100 (100 is normal damage taken)
-		private const int damageIncrease = 250; // Percentage to increase the boss's damage. 200% is double the normal damage, etc.
+		private const double damageReduction = 10; // Amount reduce damage against the boss. Use 1 - 100 (100 is normal damage taken)
+		private const double damageIncrease = 250; // Percentage to increase the boss's damage. 200% is double the normal damage, etc.
 		
 		
 		private Player theBoss;
@@ -75,11 +60,11 @@ namespace Oxide.Plugins
 		}
 		
 		
-		private void OnEntityHealthChange(EntityDamageEvent damageEvent) {		
+		private void OnEntityHealthChange(EntityDamageEvent damageEvent) 
+		{
+			//var attacker = damageEvent.Damage.DamageSource.Owner;
+			var target = damageEvent.Entity.Owner;		
 			if(theBoss == null) return;
-			
-			var attacker = damageEvent.Damage.DamageSource.Owner;
-			var target = damageEvent.Entity.Owner;
 			
 			//Other creatures on the server
 			//if(attacker.DisplayName == "Server") return;					
@@ -92,23 +77,24 @@ namespace Oxide.Plugins
 						&& damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
 						&& damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
 				){
-					PrintToChat(attacker, "[FF0000]Raid[FFFFFF] : Your attacks are doing less damage to this person!");
-					damageEvent.Damage.Amount = damageEvent.Damage.Amount * (damageReduction/100);
+//						PrintToChat(attacker, "[FF0000]Raid[FFFFFF] : Your attacks are doing less damage to this person!");
+					double damageTaken =damageEvent.Damage.Amount * (damageReduction/100);
+					damageEvent.Damage.Amount = (int)damageTaken;
 				}		
 			}
 			
-			if(attacker == theBoss)
-			{
-				//Did the boss hurt another player's face?
-				if (damageEvent.Damage.Amount > 0 // taking damage
-						&& damageEvent.Entity.IsPlayer // entity taking damage is player
-						&& damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
-						&& damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
-				){
-					PrintToChat(attacker, "[FF0000]Raid[FFFFFF] : Your foe deals you a devastating! blow!");
-					damageEvent.Damage.Amount = damageEvent.Damage.Amount * (damageIncrease/100);
-				}		
-			}
+			// if(attacker == theBoss)
+			// {
+				// //Did the boss hurt another player's face?
+				// if (damageEvent.Damage.Amount > 0 // taking damage
+						// && damageEvent.Entity.IsPlayer // entity taking damage is player
+						// && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
+						// && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
+				// ){
+					// PrintToChat(attacker, "[FF0000]Raid[FFFFFF] : Your foe deals you a devastating! blow!");
+					// damageEvent.Damage.Amount = damageEvent.Damage.Amount * (damageIncrease/100);
+				// }		
+			// }
 		}
 		
         private string ConvertArrayToString(string[] textArray)
