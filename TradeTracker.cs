@@ -83,6 +83,8 @@ namespace Oxide.Plugins
         {
             LoadTradeData();
 			
+			tradeList = new Collection<string[]>();
+
             //If there's no trade data stored, then set up the new trade data from the defaults
             if(tradeList.Count < 1)
             {
@@ -113,6 +115,7 @@ namespace Oxide.Plugins
 			{
 				if(tradeList[i][0].ToLower() == resource.ToLower())
 				{	
+					var originalPrice = Int32.Parse(tradeList[i][1]);
 					var newBuyPrice = Int32.Parse(tradeList[i][3]);
 					var newSellPrice = Int32.Parse(tradeList[i][4]);
 					var maxStackSize = Int32.Parse(tradeList[i][2]);
@@ -123,10 +126,11 @@ namespace Oxide.Plugins
 					{
 						//When resource is bought, increase buy price and decrease sell price for EVERY single item bought
 						inflationModifier = inflation / 100;
+						sellPrice = (double)newSellPrice;
 						buyPrice = (double)newBuyPrice;
 						stackModifier = (double)amount / (double)maxStackSize;
-						newBuyPrice = (int)(buyPrice + ((buyPrice * inflationModifier) * stackModifier));
-						newSellPrice = (int)(sellPrice - ((sellPrice * inflationModifier) * stackModifier));
+						newBuyPrice = (int)(buyPrice + ((originalPrice * inflationModifier) * stackModifier));
+						newSellPrice = (int)(sellPrice - ((originalPrice * inflationModifier) * stackModifier));
 					}
 					
 					//Update for "Sell"
@@ -135,9 +139,11 @@ namespace Oxide.Plugins
 						//When resource is sold, increase sell price and decrease buy price for EVERY single item bought
 						inflationModifier = inflation / 100;
 						sellPrice = (double)newSellPrice;
+						buyPrice = (double)newBuyPrice;
 						stackModifier = (double)amount / (double)maxStackSize;
-						newSellPrice = (int)(sellPrice + ((sellPrice * inflationModifier) * stackModifier));
-						newBuyPrice = (int)(buyPrice - ((buyPrice * inflationModifier) * stackModifier));
+						newSellPrice = (int)(sellPrice + ((originalPrice * inflationModifier) * stackModifier));
+						newBuyPrice = (int)(buyPrice - ((originalPrice * inflationModifier) * stackModifier));
+						
 					}
 					
 					newResource = new string[5]{ tradeList[i][0],tradeList[i][1],tradeList[i][2],newBuyPrice.ToString(),newSellPrice.ToString() };
@@ -147,6 +153,9 @@ namespace Oxide.Plugins
 			if(newResource.Length < 1) return;
 			tradeList.RemoveAt(recordNumber);
 			tradeList.Insert(recordNumber,newResource);
+			
+			// Save the data
+			SaveTradeData();
 		}
 		
 		// Buying an item from the exchange
@@ -241,7 +250,7 @@ namespace Oxide.Plugins
 			}
 			
 			// Open a popup with the resource details
-			var message = "Of course!\n[00FF00]" + Capitalise(resourceDetails[0]) + "[FFFFFF] is currently selling for [00FFFF]" + (Int32.Parse(resourceDetails[4])/1000).ToString() + "[FFFF00]g[FFFFFF] per item.\nIt can be bought in stacks of up to [00FF00]" + resourceDetails[2].ToString() + "[FFFFFF].\n How much would you like to buy?";
+			var message = "Of course!\n[00FF00]" + Capitalise(resourceDetails[0]) + "[FFFFFF] is currently selling for [00FFFF]" + (Int32.Parse(resourceDetails[3])/1000).ToString() + "[FFFF00]g[FFFFFF] per item.\nIt can be bought in stacks of up to [00FF00]" + resourceDetails[2].ToString() + "[FFFFFF].\n How much would you like to buy?";
 			
 			// Get the player's wallet contents
 			CheckWalletExists(player);
@@ -415,7 +424,7 @@ namespace Oxide.Plugins
 			{
 				if(item[0].ToLower() == resource.ToLower())
 				{
-					total = amount * (Int32.Parse(item[position]) / priceModifier);
+					total = (int)(amount * (double)(Int32.Parse(item[position]) / priceModifier));
 				}
 			}
 			return total;
@@ -528,33 +537,41 @@ namespace Oxide.Plugins
             var itemsPerPage = 25;
             for(var i = 0; i<itemsPerPage;i++)
             {
+				buyIcon = "[008888]";
+				sellIcon = "[008888]";
                 var resource = tradeList[i][0];
                 var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
                 var stackLimit = Int32.Parse(tradeList[i][2]);
                 var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
                 var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
-
-                var buyDiff = originalPrice + (buyPrice - originalPrice);
-                var buyPriceText = buyDiff.ToString();
-                if(buyDiff == 0) buyPriceText = "";
-                var sellDiff = sellPrice -  + (sellPrice - originalPrice);
-                var sellPriceText = sellDiff.ToString();
-                if(sellDiff == 0) sellPriceText = "";
+				
+				if(buyPrice > originalPrice) buyIcon = "[FF0000]";
+				if(buyPrice < originalPrice) buyIcon = "[00FF00]";
+				if(sellPrice > originalPrice) sellIcon = "[FF0000]";
+				if(sellPrice < originalPrice) sellIcon = "[00FF00]";
+				var buyPriceText = buyPrice.ToString();
+				var sellPriceText = sellPrice.ToString();
+				
+                // var buyDiff = originalPrice + (buyPrice - originalPrice);
+                // var buyPriceText = buyDiff.ToString();
+                // if(buyDiff == 0) buyPriceText = "";
+                // var sellDiff = sellPrice + (sellPrice - originalPrice);
+                // var sellPriceText = sellDiff.ToString();
+                // if(sellDiff == 0) sellPriceText = "";
 
                 //Has the price modulated?
-                if(buyDiff > originalPrice) buyIcon = "[FF0000]";
-                if(buyDiff < originalPrice) buyIcon = "[00FF00]";
-                if(sellDiff > originalPrice) sellIcon = "[FF0000]";
-                if(sellDiff < originalPrice) sellIcon = "[00FF00]";
-
-
+                // if(buyDiff > originalPrice) buyIcon = "[FF0000]";
+                // if(buyDiff < originalPrice) buyIcon = "[00FF00]";
+                // if(sellDiff > originalPrice) sellIcon = "[FF0000]";
+                // if(sellDiff < originalPrice) sellIcon = "[00FF00]";
+				
                 itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
             }
 			
 			itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
 			
             //Display the Popup with the price
-            player.ShowConfirmPopup("Grand Exchange", itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithTradeList(player, selection, dialogue, data, itemsPerPage, itemsPerPage));
+				player.ShowConfirmPopup("Grand Exchange", itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithTradeList(player, selection, dialogue, data, itemsPerPage, itemsPerPage));
         }
 
         
@@ -581,24 +598,41 @@ namespace Oxide.Plugins
 
 			for(var i = currentItemCount; i<itemsPerPage + currentItemCount; i++)
             {
+				buyIcon = "[008888]";
+				sellIcon = "[008888]";
                 var resource = tradeList[i][0];
                 var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
-                var stackLimit = Int32.Parse(tradeList[i][2]) / priceModifier;
+                var stackLimit = Int32.Parse(tradeList[i][2]);
                 var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
                 var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
+				
+				if(buyPrice > originalPrice) buyIcon = "[FF0000]";
+				if(buyPrice < originalPrice) buyIcon = "[00FF00]";
+				if(sellPrice > originalPrice) sellIcon = "[FF0000]";
+				if(sellPrice < originalPrice) sellIcon = "[00FF00]";
+				var buyPriceText = buyPrice.ToString();
+				var sellPriceText = sellPrice.ToString();
+				
+				// buyIcon = "[008888]";
+				// sellIcon = "[008888]";
+                // var resource = tradeList[i][0];
+                // var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
+                // var stackLimit = Int32.Parse(tradeList[i][2]) / priceModifier;
+                // var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
+                // var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
 
-                var buyDiff = originalPrice + (buyPrice - originalPrice);
-                var buyPriceText = buyDiff.ToString();
-                if(buyDiff == 0) buyPriceText = "";
-                var sellDiff = sellPrice -  + (sellPrice - originalPrice);
-                var sellPriceText = sellDiff.ToString();
-                if(sellDiff == 0) sellPriceText = "";
+                // var buyDiff = originalPrice + (buyPrice - originalPrice);
+                // var buyPriceText = buyDiff.ToString();
+                // if(buyDiff == 0) buyPriceText = "";
+                // var sellDiff = sellPrice -  + (sellPrice - originalPrice);
+                // var sellPriceText = sellDiff.ToString();
+                // if(sellDiff == 0) sellPriceText = "";
 
-                //Has the price modulated?
-                if(buyDiff > originalPrice) buyIcon = "[FF0000]";
-                if(buyDiff < originalPrice) buyIcon = "[00FF00]";
-                if(sellDiff > originalPrice) sellIcon = "[FF0000]";
-                if(sellDiff < originalPrice) sellIcon = "[00FF00]";
+                // //Has the price modulated?
+                // if(buyDiff > originalPrice) buyIcon = "[FF0000]";
+                // if(buyDiff < originalPrice) buyIcon = "[00FF00]";
+                // if(sellDiff > originalPrice) sellIcon = "[FF0000]";
+                // if(sellDiff < originalPrice) sellIcon = "[00FF00]";
 
                 itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
             }
@@ -698,7 +732,7 @@ namespace Oxide.Plugins
             defaultTradeList.Add(new string[3] { "Ballista", "10000000", "1" });
             defaultTradeList.Add(new string[3] { "Ballista Bolt", "500000", "100" });
             defaultTradeList.Add(new string[3] { "Bandage", "50000", "25" });
-            defaultTradeList.Add(new string[3] { "Bat Wing", "50000", "25" });
+            defaultTradeList.Add(new string[3] { "Bat Wing", "50000", "1000" });
             defaultTradeList.Add(new string[3] { "Bear Hide", "250000", "1000" });
             defaultTradeList.Add(new string[3] { "Bent Horn", "2000000", "1000" });
             defaultTradeList.Add(new string[3] { "Berries", "20000", "25" });
