@@ -4,16 +4,16 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Collections.ObjectModel;
 //using System.Timers;
-//using CodeHatch.Engine.Networking;
+using CodeHatch.Engine.Networking;
 //using CodeHatch.Engine.Core.Networking;
 //using CodeHatch.Thrones.SocialSystem;
-//using CodeHatch.Common;
+using CodeHatch.Common;
 //using CodeHatch.Permissions;
 using Oxide.Core;
-//using CodeHatch.Networking.Events;
+using CodeHatch.Networking.Events;
 //using CodeHatch.Networking.Events.Entities;
 //using CodeHatch.Networking.Events.Entities.Players;
-//using CodeHatch.Networking.Events.Players;
+using CodeHatch.Networking.Events.Players;
 //using CodeHatch.ItemContainer;
 using CodeHatch.UserInterface.Dialogues;
 //using CodeHatch.Inventory.Blueprints.Components;
@@ -34,6 +34,8 @@ namespace Oxide.Plugins
         // 2 - Max Stack size
         // 3 - Price
         private Dictionary<string, int> wallet = new Dictionary<string, int>();
+
+        void Log(string msg) => Puts($"{Title} : {msg}");
 
 
         // SAVE DATA ===============================================================================================
@@ -56,17 +58,160 @@ namespace Oxide.Plugins
             //If there's no trade data stored, then set up the new trade data from the defaults
             if(tradeList.Count < 1)
             {
-                tradeList = LoadDefaultTradeValues();
+                var defaultList = LoadDefaultTradeValues();
+                foreach(var item in defaultList)
+                {
+                    var newItem = new string[4]{ item[0], item[1], item[2], item[1]};
+                    tradeList.Add(newItem);
+                }
             }
+
+            // Save the trade data
+            SaveTradeData();
+
+            // Run testing
+            RunSanityCheckTests();
         }
         // ===========================================================================================================
+
+        private void RunSanityCheckTests()
+        {
+            // Test the item store
+            //ViewTheExchangeStore(null,null);
+        }
+
+        // Buying an item from the exchange
+        [ChatCommand("buy")]
+        private void BuyAnItem(Player player, string cmd)
+        {
+
+        }
+
+        // Selling an item on the exchange
+        [ChatCommand("sell")]
+        private void SellAnItem(Player player, string cmd)
+        {
+
+        }
+
+
+        // View the prices of items on the exchange
+        [ChatCommand("store")]
+        private void ViewTheExchangeStore(Player player, string cmd)
+        {
+            // Are there any items on the store?
+            if(tradeList.Count == 0)
+            {
+                Log("There appear to be no items in the store!");
+                return;
+            }
+            Log("Trade: Prices have been found!");
+
+            // Check if player exists (For Unit Testing)
+            var adjustorIcon = "";
+            var itemText = "";
+            var itemsPerPage = 30;
+            for(var i = 0; i<itemsPerPage;i++)
+            {
+                var resource = tradeList[i][0];
+                var originalPrice = Int32.Parse(tradeList[i][1]);
+                var stackLimit = Int32.Parse(tradeList[i][2]);
+                var currentPrice = Int32.Parse(tradeList[i][3]);
+
+                var adjustedPrice = currentPrice - originalPrice;
+                var adjustedPriceText = adjustedPrice.ToString();
+                if(adjustedPrice == 0) adjustedPriceText = "";
+
+                //Has the price modulated?
+                if(currentPrice > originalPrice) adjustorIcon = "[FF0000]+";
+                if(currentPrice < originalPrice) adjustorIcon = "[00FF00]";
+
+
+                itemText = itemText + "[00FF00]" + Capitalise(resource) + "[FFFFFF] : " + "[FFFF00]$ " + currentPrice + " [FFFFFF]" + adjustorIcon + adjustedPriceText + "\n";
+            }
+
+            //Display the Popup with the price
+            //player.ShowPopup("Trade Prices", itemText,"Ok",  (selection, dialogue, data) => DoNothing(player, selection, dialogue, data));
+            player.ShowConfirmPopup("Trade Prices", itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithTradeList(player, selection, dialogue, data, itemsPerPage, itemsPerPage));
+        }
+
+        
+		private void ContinueWithTradeList(Player player, Options selection, Dialogue dialogue, object contextData,int itemsPerPage, int currentItemCount)
+		{
+            if (selection != Options.Yes)
+            {
+                //Leave
+                return;
+            }
+            
+            var adjustorIcon = "";
+            var itemText = "";
+
+			for(var i = currentItemCount; i<itemsPerPage + currentItemCount; i++)
+            {
+                var resource = tradeList[i][0];
+                var originalPrice = Int32.Parse(tradeList[i][1]);
+                var stackLimit = Int32.Parse(tradeList[i][2]);
+                var currentPrice = Int32.Parse(tradeList[i][3]);
+
+                var adjustedPrice = currentPrice - originalPrice;
+                var adjustedPriceText = adjustedPrice.ToString();
+                if(adjustedPrice == 0) adjustedPriceText = "";
+
+                //Has the price modulated?
+                if(currentPrice > originalPrice) adjustorIcon = "[FF0000]+";
+                if(currentPrice < originalPrice) adjustorIcon = "[00FF00]";
+
+
+                itemText = itemText + "[00FF00]" + Capitalise(resource) + "[FFFFFF] : " + "[FFFF00]$ " + currentPrice + " [FFFFFF]" + adjustorIcon + adjustedPriceText + "\n";
+
+            }
+
+            currentItemCount = currentItemCount + itemsPerPage;
+
+            // Display the Next page
+            if((currentItemCount + itemsPerPage) <= tradeList.Count)
+            {
+                player.ShowConfirmPopup("Trade Prices", itemText,  "Next Page", "Exit", (options, dialogue1, data) => ContinueWithTradeList(player, options, dialogue1, data, itemsPerPage, currentItemCount));
+            }
+            else
+            {
+                PlayerExtensions.ShowPopup(player,"Trade Prices", itemText, "Yes",  (newselection, dialogue2, data) => DoNothing(player, newselection, dialogue2, data));
+            }
+		}
+
+		private void DoNothing(Player player, Options selection, Dialogue dialogue, object contextData)
+		{
+			//Do nothing
+		}
+
+		// Capitalise the Starting letters
+		private string Capitalise(string word)
+		{
+			var finalText = "";
+			finalText = Char.ToUpper(word[0]).ToString();
+			var spaceFound = 0;
+			for(var i=1; i<word.Length;i++)
+			{
+				if(word[i] == ' ')
+				{
+					spaceFound = i + 1;
+				}
+				if(i == spaceFound)
+				{
+					finalText = finalText + Char.ToUpper(word[i]).ToString();
+				}
+				else finalText = finalText + word[i].ToString();
+			}
+			return finalText;
+		}
 
         private Collection<string[]> LoadDefaultTradeValues()
         {
             var defaultTradeList = new Collection<string[]>();
 
             defaultTradeList.Add(new string[3] { "Apple", "50", "25" });
-            defaultTradeList.Add(new string[3] { "Baked Clay", "50", "1000" });
+            defaultTradeList.Add(new string[3] { "Baked Clay", "30", "1000" });
             defaultTradeList.Add(new string[3] { "Ballista", "50", "1" });
             defaultTradeList.Add(new string[3] { "Ballista Bolt", "50", "100" });
             defaultTradeList.Add(new string[3] { "Bandage", "50", "25" });
