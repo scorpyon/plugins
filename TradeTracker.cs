@@ -20,12 +20,13 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.2")]
+    [Info("Trade Tracker", "Scorpyon", "1.1.3")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
 		private const double maxDeflation = 0; // This is the deflation modifier. This is the most that a price can drop below its average price to buy and above it's price to sell(Percentage)
 		private const int priceDeflationTime = 3600; // This dictates the number of seconds for each tick which brings the prices back towards their original values
+		private double sellPercentage = 50; // This controls the sell percentage price (of the original price) that items sell for.
 		private const int goldRewardForPvp = 10000; // This is the maximum amount of gold that can be stolen from a player for killing them.
 		private const int goldRewardForPve = 100; // This is the maximum amount rewarded to a player for killing monsters, etc. (When harvesting the dead body)
 		private bool allowPvpGold = true; // Turns on/off gold for PVP
@@ -288,6 +289,7 @@ namespace Oxide.Plugins
             tradeList = Interface.GetMod().DataFileSystem.ReadObject<Collection<string[]>>("SavedTradeList");
             wallet = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string,int>>("SavedTradeWallet");
             markList = Interface.GetMod().DataFileSystem.ReadObject<Collection<double[]>>("SavedMarkList");
+            sellPercentage = Interface.GetMod().DataFileSystem.ReadObject<double>("SavedSellPercentage");
         }
 
         private void SaveTradeData()
@@ -296,6 +298,7 @@ namespace Oxide.Plugins
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeList", tradeList);
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeWallet", wallet);
             Interface.GetMod().DataFileSystem.WriteObject("SavedMarkList", markList);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedSellPercentage", sellPercentage);
         }
 		
 		private void OnPlayerConnected(Player player)
@@ -310,6 +313,7 @@ namespace Oxide.Plugins
 		private void CheckWalletExists(Player player)
 		{
 			//Check if the player has a wallet yet
+			if(wallet.Count < 1) wallet.Add(player.Name.ToLower(),0);
 			if(!wallet.ContainsKey(player.Name.ToLower()))
 			{
 				wallet.Add(player.Name.ToLower(),0);
@@ -326,18 +330,94 @@ namespace Oxide.Plugins
             {
                 foreach(var item in tradeDefaults)
                 {
-                    var newItem = new string[5]{ item[0], item[1], item[2], item[1], item[1] };
+					var sellPrice = Int32.Parse(item[1]) * (sellPercentage/100);
+                    var newItem = new string[5]{ item[0], item[1], item[2], item[1], sellPrice.ToString() };
                     tradeList.Add(newItem);
                 }
             }
 			
 			// Start deflation timer
 			timer.Repeat(priceDeflationTime,0,DeflatePrices);
+			
+			//Make sure the sellPercentage hasn't been overwritten to 0 somehow!
+			if(sellPercentage == 0)
+			{
+				sellPercentage = 50;
+			}
 
             // Save the trade data
             SaveTradeData();
         }
         // ===========================================================================================================
+		
+		[ChatCommand("setsellpercentage")]
+        private void SetTheSellingPercentageAmount(Player player, string cmd, string[] input)
+        {
+			if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+
+			int percentage;
+			if(Int32.TryParse(input[0], out percentage) == false)
+			{	
+				PrintToChat(player, "You entered an invalid amount. Please enter an amount from 1-100%");
+				return;
+			}	
+			
+			sellPercentage = (double)percentage;
+			//Adjust the prices
+			ForcePriceAdjustment();
+			PrintToChat(player, "The Sell percentage has been set to " + percentage.ToString());
+						
+			SaveTradeData();
+		}
+
+		[ChatCommand("setplayergold")]
+        private void SetAPlayersGoldAmount(Player player, string cmd, string[] input)
+        {
+			if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			var playerName = Capitalise(input[0]);
+			var target = Server.GetPlayerByName(playerName);
+			if(target == null)
+			{	
+				PrintToChat(player, "That player doesn't appear to be online at this moment.");
+				return;
+			}	
+			
+			int amount;
+			if(Int32.TryParse(input[1], out amount) == false)
+			{	
+				PrintToChat(player, "You entered an invalid amount. Please enter in the format: /setplayergold 'Name_In_Quotes' <amount>");
+				return;
+			}	
+
+			CheckWalletExists(target);
+			wallet[playerName.ToLower()] = amount;
+			PrintToChat(player, "You have set gold amount for " + playerName + " to " + amount.ToString());
+			SaveTradeData();
+		}
+		
+		[ChatCommand("removeallgold")]
+        private void SetAllPlayersGoldAmount(Player player, string cmd)
+        {
+			if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			
+			wallet = new Dictionary<string,int>();
+			
+			PrintToChat(player, "All players' gold has been removed!");
+			
+			SaveTradeData();
+		}
 		
 		[ChatCommand("loc")]
         private void LocationCommand(Player player, string cmd, string[] args)
@@ -538,6 +618,16 @@ namespace Oxide.Plugins
 			}
 		}
 		
+		private void ForcePriceAdjustment()
+		{
+			foreach(var item in tradeList)
+			{
+				var originalPrice = Int32.Parse(item[1]);
+				item[4] = (originalPrice * (sellPercentage/100)).ToString();
+			}
+			SaveTradeData();
+		}
+		
 		private void DeflatePrices()
 		{
 			int newBuyPrice = 0;
@@ -561,7 +651,7 @@ namespace Oxide.Plugins
 				
 				// Make sure it doesn't fall below expected levels
 				priceBottomShelf = (int)(originalPrice - ((originalPrice * deflationModifier) * stackModifier));
-				priceTopShelf = (int)(originalPrice + ((originalPrice * deflationModifier) * stackModifier));
+				priceTopShelf = (int)((double)(originalPrice + ((originalPrice * deflationModifier) * stackModifier)) * (double)(sellPercentage/100));
 				
 				if(newBuyPrice < priceBottomShelf) newBuyPrice = priceBottomShelf;
 				if(newSellPrice > priceTopShelf) newSellPrice = priceTopShelf;
@@ -573,10 +663,11 @@ namespace Oxide.Plugins
 				resource = item[0];
 			}
 			
-			PrintToChat(resource + " BottomShelf = " + priceBottomShelf.ToString());
-			PrintToChat(resource + " TopShelf = " + priceTopShelf.ToString());
-			PrintToChat("Buy = " + newBuyPrice.ToString());
-			PrintToChat("Sell = " + newSellPrice.ToString());
+			// PrintToChat(resource + " BottomShelf = " + priceBottomShelf.ToString());
+			// PrintToChat(resource + " TopShelf = " + priceTopShelf.ToString());
+			// PrintToChat("Buy = " + newBuyPrice.ToString());
+			// PrintToChat("Sell = " + newSellPrice.ToString());
+			// PrintToChat("SellPercentage = " + ((double)(sellPercentage/100)).ToString());
 
 			// Save the trade data
             SaveTradeData();
@@ -612,9 +703,9 @@ namespace Oxide.Plugins
 						newBuyPrice = (int)(buyPrice + ((originalPrice * inflationModifier) * stackModifier));
 						newSellPrice = (int)(sellPrice + ((originalPrice * inflationModifier) * stackModifier));
 						if(newSellPrice > originalPrice) newSellPrice = originalPrice;
-						// PrintToChat("Original Price = " + originalPrice);
-						// PrintToChat("NewSellPrice = " + newSellPrice);
-					}
+						//Adjust by the sellPercentage
+						newSellPrice = (int)(newSellPrice * (double)(sellPercentage / 100));
+						}
 					
 					//Update for "Sell"
 					if(type == "sell")
@@ -1257,16 +1348,17 @@ namespace Oxide.Plugins
 				sellIcon = "[008888]";
                 var resource = tradeList[i][0];
                 var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
-                var stackLimit = Int32.Parse(tradeList[i][2]);
+                var originalSellPrice = (int)((double)originalPrice * (sellPercentage/100));
+				var stackLimit = Int32.Parse(tradeList[i][2]);
                 var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
                 var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
 				
 				if(buyPrice >= originalPrice) buyIcon = "[00FF00]";
 				if(buyPrice > originalPrice + (originalPrice * 0.1)) buyIcon = "[888800]";
 				if(buyPrice > originalPrice + (originalPrice * 0.2)) buyIcon = "[FF0000]";
-				if(sellPrice <= originalPrice) sellIcon = "[00FF00]";
-				if(sellPrice < originalPrice - (originalPrice * 0.1)) sellIcon = "[888800]";
-				if(sellPrice < originalPrice - (originalPrice * 0.2)) sellIcon = "[FF0000]";
+				if(sellPrice <= originalSellPrice) sellIcon = "[00FF00]";
+				if(sellPrice < originalSellPrice - (originalSellPrice * 0.1)) sellIcon = "[888800]";
+				if(sellPrice < originalSellPrice - (originalSellPrice * 0.2)) sellIcon = "[FF0000]";
 				// if(buyPrice < originalPrice + (originalPrice * 0.3)) buyIcon = "[00FF00]";
 				// if(sellPrice > originalPrice) sellIcon = "[FF0000]";
 				// if(sellPrice < originalPrice) sellIcon = "[00FF00]";
