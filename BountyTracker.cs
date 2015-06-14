@@ -21,7 +21,7 @@ using CodeHatch.Inventory.Blueprints.Components;
 
 namespace Oxide.Plugins
 {
-    [Info("Bounty Tracker", "Scorpyon", "1.0.3")]
+    [Info("Bounty Tracker", "Scorpyon", "1.0.5")]
     public class BountyTracker : ReignOfKingsPlugin
     {
         // ===========================================================================================================
@@ -59,7 +59,6 @@ namespace Oxide.Plugins
 
         // ===========================================================================================================
 
-
 		
         // SEE THE CURRENT BOUNTY LIST
         [ChatCommand("bounties")]
@@ -90,6 +89,9 @@ namespace Oxide.Plugins
             }
 
             player.ShowPopup(title,message,"Ok",  (selection, dialogue, data) => ClosePopup(player, selection, dialogue, data));
+			
+			// Save the data
+			SaveBountyListData();
         }
 		
 		private void ClosePopup(Player player, Options selection, Dialogue dialogue, object contextData)
@@ -142,17 +144,22 @@ namespace Oxide.Plugins
                 PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have cancelled the bounty request.");
                 return;
             }
-
-			var guild = PlayerExtensions.GetGuild(player).DisplayName;
+			
+			var playerName = player.Name;
+			var guild = PlayerExtensions.GetGuild(player).Name;
 
             // Confirm the bounty in the list
             //var bountyDetails = new string[5];
             foreach(var bounty in bountyList)
             {
-                if(bounty[0] == player.Name.ToLower() && bounty[4] != "active")
+                if(bounty[0] == playerName.ToLower() && bounty[4] != "active")
                 {
+					string resource = bounty[2];
+					string amountAsText = bounty[3];
+					string targetName = bounty[1];
+					
 					// Make sure the player has enough resource for this!
-					if(!PlayerHasTheResources(player, bounty[2], bounty[3])) 
+					if(PlayerHasTheResources(player, resource, amountAsText) == false) 
 					{
 						PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You do not have the resources for this bounty in your inventory!");
 						return;
@@ -166,12 +173,8 @@ namespace Oxide.Plugins
 					
                     bounty[4] = "active";
 					
-                    //for(var i=0;i<bounty.Length;i++)
-                    //{
-                    //    bountyDetails[i] = bounty[i].ToString();
-                    //}
-
-					PrintToChat("[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + player.DisplayName.ToString() + "[FFFFFF] of [FF00FF]" + Capitalise(guild) + "[FFFFFF] has set a bounty reward of [FF0000]" + bounty[3].ToString() + " " + bounty[2].ToString() + "[FFFFFF] for the death of [00FF00]" + Capitalise(bounty[1].ToString()) + "[FFFFFF]!");
+					var message = "[FF0000]Assassin's Guild[FFFFFF] : [00FF00]" + playerName + "[FFFFFF] of [FF00FF]" + guild + "[FFFFFF] has set a bounty reward of [FF0000]" + amountAsText + " " + resource + "[FFFFFF] for the death of [00FF00]" + Capitalise(targetName) + "[FFFFFF]!";
+					PrintToChat(message);
 
                 }
             }
@@ -372,36 +375,34 @@ namespace Oxide.Plugins
                 return;
             }
 
-            // Check if I have already set a bounty on this player's head.
+            // Add the name to the listing
             foreach(var bounty in bountyList)
             {
-                if(bounty[0] == playerName.ToLower())
+//				PrintToChat(bounty[0] + " " + bounty[1] + " " + bounty[2] + " " + bounty[3]);
+				if(bounty[0] == playerName.ToLower() && bounty[1].ToLower() == bountyPlayerName.ToLower() && bounty[4] == "active")
                 {   
-                    if(bounty[1] == bountyPlayerName.ToLower())
-                    {
-						// If there is already a bounty on the player from me
-                        if(bounty[4] == "active")
-                        {
-                            PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have already set an active bounty on that person's head, my Lord!");
-                            return;
-                        }
-                    }
-                    if(bounty[1] == "")
-                    {
-                        //Add targets name here
-                        bounty[1] = bountyPlayerName.ToLower();
+					PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You already have an active bounty on this person's head!");
+					return;
+				}
+                if(bounty[0] == playerName.ToLower() && bounty[4] != "active")
+                {   
+					//Add targets name here
+					bounty[1] = bountyPlayerName.ToLower();
 
-                        // Tell the player
-                        PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating.");
+					// Tell the player
+					PrintToChat(player, "[FF0000]Assassin's Guild[FFFFFF] : You have added [00FF00]" + Capitalise(bountyPlayerName) + "[FFFFFF]'s name to the bounty you are creating.");
 
-                        // Save the data
-                        SaveBountyListData();
+					// Save the data
+					SaveBountyListData();
 
-                        return;
-                    }
+					// Load the next Popup!
+					player.ShowInputPopup("Set Bounty Details", "What resource are you offering as a reward?", "", "Confirm", "Cancel", (options, dialogue1, data) => SetBountyResourceType(player, options, dialogue1, data));
+					
+					return;
                 }
             }
 
+			
             // Create a new bounty listing
             bountyList.Add(CreateEmptyBountyListing());
 
@@ -513,7 +514,7 @@ namespace Oxide.Plugins
 		// Capitalise the Starting letters
 		private string Capitalise(string word)
 		{
-			var finalText = "";
+			string finalText = "";
 			finalText = Char.ToUpper(word[0]).ToString();
 			var spaceFound = 0;
 			for(var i=1; i<word.Length;i++)
@@ -528,23 +529,23 @@ namespace Oxide.Plugins
 				}
 				else finalText = finalText + word[i].ToString();
 			}
-			return finalText;
+			return (string)finalText;
 		}
 		
 		
         private bool PlayerHasTheResources(Player player, string resource, string amountAsString)
         {
             // Convert the amount to int
-            var amount = Int32.Parse(amountAsString);
+            int amount = Int32.Parse(amountAsString);
 
             // Check player's inventory
             var inventory = player.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
 
             // Check how much the player has
-            var foundAmount = 0;
+            int foundAmount = 0;
             foreach (var item in inventory.Contents.Where(item => item != null))
             {
-                if(item.Name == resource)
+                if(item.Name.ToLower() == resource.ToLower())
                 {
                     foundAmount = foundAmount + item.StackAmount;
                 }
