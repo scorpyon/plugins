@@ -20,7 +20,7 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.4")]
+    [Info("Trade Tracker", "Scorpyon", "1.1.5")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
@@ -33,6 +33,7 @@ namespace Oxide.Plugins
 		private bool allowPveGold = true; // Turns on/off gold for PVE
 		private bool tradeAreaIsSafe = false; // Determines whether the marked safe area is Safe against being attacked / PvP
 
+#region Default Trade Values
         private Collection<string[]> LoadDefaultTradeValues()
         {
             var defaultTradeList = new Collection<string[]>();
@@ -255,6 +256,7 @@ namespace Oxide.Plugins
             return defaultTradeList;
         }
 
+#endregion
 		
 		// ================================================================================================================================
 		// ================================================================================================================================
@@ -262,6 +264,8 @@ namespace Oxide.Plugins
 		// ================================================================================================================================
 		// ================================================================================================================================
 		
+#region Server Variables
+
         private Collection<string[]> tradeDefaults = new Collection<string[]>();
         // 0 - Resource name
         // 1 - Original Price
@@ -281,6 +285,10 @@ namespace Oxide.Plugins
 		private const int maxPossibleGold = 21000000; // DO NOT RAISE THIS ANY HIGHER - 32-bit INTEGER FLOOD WARNING	
 
 		private Collection<double[]> markList = new Collection<double[]>();
+
+#endregion
+
+#region Save and Load Data Methods
 
         // SAVE DATA ===============================================================================================
         private void LoadTradeData()
@@ -350,10 +358,176 @@ namespace Oxide.Plugins
         }
         // ===========================================================================================================
 		
+#endregion
+
+#region User Commands
+        
+		// Buying an item from the exchange
+        [ChatCommand("listtradedefaults")]
+        private void ListTheDefaultTrades(Player player, string cmd,string[] input)
+        {
+            DisplayDefaultTradeList(player, cmd, input);
+        }
+
+		// Buying an item from the exchange
+        [ChatCommand("setprice")]
+        private void AdminSetResourcePrice(Player player, string cmd,string[] input)
+        {
+            SetThePriceOfAnItem(player, cmd, input);
+        }
+		
+		// Check my wallet
+        [ChatCommand("wallet")]
+        private void CheckHowMuchMoneyAPlayerhas(Player player, string cmd)
+        {
+            CheckHowMuchGoldICurrentlyHave(player, cmd);
+        }
+
+        // Change the current sell percentage amount
 		[ChatCommand("setsellpercentage")]
         private void SetTheSellingPercentageAmount(Player player, string cmd, string[] input)
+		{
+		    SetTheNewSellPercentageAmount(player, cmd, input);
+		}
+
+        // Set a players gold to a specific amount
+		[ChatCommand("setplayergold")]
+        private void SetAPlayersGoldAmount(Player player, string cmd, string[] input)
+		{
+		    AdminSetAPlayersGoldAmount(player, cmd, input);
+		}
+
+		// Wipe all gold from EVERY player 
+		[ChatCommand("removeallgold")]
+        private void SetAllPlayersGoldAmount(Player player, string cmd)
+		{
+		    RemoveTheGoldFromAllPlayers(player, cmd);
+		}
+		
+        // Get the current location
+		[ChatCommand("loc")]
+        private void LocationCommand(Player player, string cmd, string[] args)
+		{
+		    GetThePlayersCurrentLocation(player, cmd, args);
+		}
+		
+		// USE /marktrade <int> to designate marks for that position
+		[ChatCommand("markadd")]
+        private void MarkAreaForTrade(Player player, string cmd, string[] input)
+		{
+		    AddTheTradeAreaMark(player, cmd, input);
+		}
+		
+        
+		// Remove all marks that have been made
+		[ChatCommand("markremoveall")]
+        private void RemoveAllMarkedPoints(Player player, string cmd, string[] input)
+		{
+		    RemoveAllMarksForTradeArea(player, cmd, input);
+		}
+		
+		// Remove all marks that have been made
+		[ChatCommand("safetrade")]
+        private void MakeTradeAreasSafe(Player player, string cmd)
+		{
+		    ToggleTheSafeTradingArea(player, cmd);
+		}
+		
+        
+		// Buying an item from the exchange
+        [ChatCommand("givecredits")]
+        private void AdminGiveCredits(Player player, string cmd,string[] input)
         {
-			if (!player.HasPermission("admin"))
+            GiveGoldToAPlayer(player, cmd, input);
+        }
+		
+		// Check a player's credits
+        [ChatCommand("checkcredits")]
+        private void AdminCheckPlayerCredits(Player player, string cmd,string[] input)
+        {
+            CheckTheGoldAPlayerHas(player, cmd, input);
+        }
+		
+		// Remove an item from the store
+        [ChatCommand("removestoreitem")]
+        private void AdminRemoveItemFromStore(Player player, string cmd,string[] input)
+        {
+            RemoveAnItemFromTheExchange(player, cmd, input);
+        }
+
+		// Remove all items from the store
+        [ChatCommand("removeallstoreitems")]
+        private void AdminRemoveAllItemsFromStore(Player player, string cmd,string[] input)
+        {
+            RemoveAllExchangeItems(player, cmd, input);
+        }
+
+		// Enable the PvP gold stealing
+        [ChatCommand("pvpgold")]
+        private void AllowGoldForPvP(Player player, string cmd)
+        {
+            TogglePvpGoldStealing(player, cmd);
+        }
+			
+		// Enable the PvE gold farming
+        [ChatCommand("pvegold")]
+        private void AllowGoldForPvE(Player player, string cmd)
+        {
+            TogglePveGoldFarming(player, cmd);
+        }
+			
+		// Remove an item from the store
+        [ChatCommand("restoredefaultprices")]
+        private void RevertAllPricesToDefaultValues(Player player, string cmd)
+        {
+            RestoreTheDefaultExchangePrices(player, cmd);
+        }
+
+		// Add an item to the store
+        [ChatCommand("addstoreitem")]
+        private void AdminAddItemToStore(Player player, string cmd,string[] input)
+        {
+            AddANewItemToTheExchange(player,cmd,input);
+        }
+		
+
+        // Buying an item from the exchange
+        [ChatCommand("buy")]
+        private void BuyAnItem(Player player, string cmd)
+        {
+            BuyAnItemOnTheExchange(player, cmd);
+        }
+		
+        
+        // Selling an item on the exchange
+        [ChatCommand("sell")]
+        private void SellAnItem(Player player, string cmd)
+        {
+            SellAnItemOnTheExchange(player, cmd);
+        }
+
+        
+        // View the prices of items on the exchange
+        [ChatCommand("store")]
+        private void ViewTheExchangeStore(Player player, string cmd)
+        {
+            ShowThePlayerTheGrandExchangeStore(player, cmd);
+        }
+
+#endregion
+
+#region Private Methods
+
+        private void CheckHowMuchGoldICurrentlyHave(Player player, string cmd)
+        {
+            CheckWalletExists(player);
+			var walletAmount = wallet[player.Name.ToLower()];
+			PrintToChat(player,"You currently have [00FF00]" + walletAmount.ToString() + "[FFFF00]g[FFFFFF].");
+        }
+
+        private void SetTheNewSellPercentageAmount(Player player, string cmd, string[] input)
+        {
+            if (!player.HasPermission("admin"))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -372,12 +546,11 @@ namespace Oxide.Plugins
 			PrintToChat(player, "The Sell percentage has been set to " + percentage.ToString());
 						
 			SaveTradeData();
-		}
+        }
 
-		[ChatCommand("setplayergold")]
-        private void SetAPlayersGoldAmount(Player player, string cmd, string[] input)
+        private void AdminSetAPlayersGoldAmount(Player player, string cmd, string[] input)
         {
-			if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin"))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -401,12 +574,11 @@ namespace Oxide.Plugins
 			wallet[playerName.ToLower()] = amount;
 			PrintToChat(player, "You have set gold amount for " + playerName + " to " + amount.ToString());
 			SaveTradeData();
-		}
-		
-		[ChatCommand("removeallgold")]
-        private void SetAllPlayersGoldAmount(Player player, string cmd)
+        }
+
+        private void RemoveTheGoldFromAllPlayers(Player player, string cmd)
         {
-			if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin"))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -417,24 +589,21 @@ namespace Oxide.Plugins
 			PrintToChat(player, "All players' gold has been removed!");
 			
 			SaveTradeData();
-		}
-		
-		[ChatCommand("loc")]
-        private void LocationCommand(Player player, string cmd, string[] args)
+        }
+
+        private void GetThePlayersCurrentLocation(Player player, string cmd, string[] args)
         {
-			if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin"))
             {
                 PrintToChat(player, "For now, only admins can check locations.");
                 return;
             }
             PrintToChat(player, string.Format("Current Location: x:{0} y:{1} z:{2}", player.Entity.Position.x.ToString(), player.Entity.Position.y.ToString(), player.Entity.Position.z.ToString()));
         }
-		
-		// USE /marktrade <int> to designate marks for that position
-		[ChatCommand("markadd")]
-        private void MarkAreaForTrade(Player player, string cmd, string[] input)
+
+        private void AddTheTradeAreaMark(Player player, string cmd, string[] input)
         {
-			var newLocSet = new double[4];
+            var newLocSet = new double[4];
 			if (!player.HasPermission("admin"))
             {
                 PrintToChat(player, "For now, only admins can alter locations.");
@@ -458,25 +627,11 @@ namespace Oxide.Plugins
 			MarkLocation(player, markList[0], 0);
 
 			SaveTradeData();
-		}
-		
-		
-		private void MarkLocation(Player player, double[] locSet, int locPosition)
-		{
-			double posX = player.Entity.Position.x;
-			double posZ = player.Entity.Position.z;
-			
-			locSet[locPosition] = posX;
-			locSet[locPosition + 1] = posZ;
-			
-			PrintToChat(player, "Position has been marked at [00FF00]" + posX.ToString() + "[FFFFFF], [00FF00]" + posZ.ToString());
-		}
-		
-		// Remove all marks that have been made
-		[ChatCommand("markremoveall")]
-        private void RemoveAllMarkedPoints(Player player, string cmd, string[] input)
+        }
+
+        private void RemoveAllMarksForTradeArea(Player player, string cmd, string[] input)
         {
-			if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin"))
             {
                 PrintToChat(player, "For now, only admins can alter locations.");
                 return;
@@ -486,12 +641,10 @@ namespace Oxide.Plugins
 			
 			SaveTradeData();
         }
-		
-		// Remove all marks that have been made
-		[ChatCommand("safetrade")]
-        private void MakeTradeAreasSafe(Player player, string cmd)
+
+        private void ToggleTheSafeTradingArea(Player player, string cmd)
         {
-			if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin"))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -509,8 +662,372 @@ namespace Oxide.Plugins
 			
 			SaveTradeData();
         }
-		
-		
+
+        private void GiveGoldToAPlayer(Player player, string cmd,string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
+                return;
+            }
+			
+			int amount;
+			if(Int32.TryParse(input[1], out amount) == false)
+			{
+				PrintToChat(player, "That was not a recognised amount!");
+                return;
+			}
+			
+			var playerName = input[0];
+			var target = Server.GetPlayerByName(playerName);
+			
+			if(target == null)
+			{
+				PrintToChat(player, "That player doesn't appear to be online right now!");
+                return;
+			}
+			
+			PrintToChat(player, "Giving " + amount.ToString() + " gold to " + playerName);
+			PrintToChat(target, "You have received an Admin gift of " + amount.ToString() + " gold.");
+			
+			CheckWalletExists(target);
+			GiveGold(target,amount);
+			
+			// Save the trade data
+            SaveTradeData();
+        }
+
+        private void CheckTheGoldAPlayerHas(Player player, string cmd,string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			
+			var playerName = input.JoinToString(" ");
+
+			var target = Server.GetPlayerByName(playerName);
+			if(target == null)
+			{
+				PrintToChat(player, "That player doesn't appear to be online right now!");
+                return;
+			}
+			
+			CheckWalletExists(target);
+			var goldAmount = wallet[target.Name.ToLower()];
+			PrintToChat(player, target.Name + " currently has " + goldAmount.ToString() + " gold.");
+        }
+
+        private void RemoveAnItemFromTheExchange(Player player, string cmd,string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			
+			var resource = input.JoinToString(" ");
+			int position = -1;
+			for(var i=0; i<tradeList.Count; i++)
+			{
+				if(tradeList[i][0].ToLower() == resource.ToLower())
+				{
+					position = i;
+					break;
+				}
+			}
+			if(position >= 0)
+			{
+				tradeList.RemoveAt(position);
+				PrintToChat(player, resource + "  has been removed from the store.");
+			}
+			else PrintToChat(player, "Could not find that item in the store to remove it.");
+			
+
+			//Save the data
+			SaveTradeData();
+        }
+
+        private void RemoveAllExchangeItems(Player player, string cmd,string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			
+			tradeList = new Collection<string[]>();
+			
+			PrintToChat(player, "The exchange store has been wiped! Use /addstoreitem <itemname> to start filling it again.");
+			
+			//Save the data
+			SaveTradeData();
+        }
+
+        private void TogglePvpGoldStealing(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			if(allowPvpGold)
+			{	
+				allowPvpGold = false;
+				PrintToChat(player,"PvP gold stealing is now [FF0000]OFF");
+				return;
+			}
+			allowPvpGold = true;
+			PrintToChat(player,"PvP gold stealing is now [00FF00]ON");
+			return;
+        }
+
+        private void TogglePveGoldFarming(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			if(allowPveGold)
+			{	
+				allowPveGold = false;
+				PrintToChat(player,"PvE gold farming is now [FF0000]OFF");
+				return;
+			}
+			allowPveGold = true;
+			PrintToChat(player,"PvP gold farming is now [00FF00]ON");
+			return;
+        }
+
+        private void RestoreTheDefaultExchangePrices(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			
+			tradeList = new Collection<string[]>();
+			foreach(var item in tradeDefaults)
+			{
+				var newItem = new string[5]{ item[0], item[1], item[2], item[1], item[1] };
+				tradeList.Add(newItem);
+			}
+			PrintToChat(player, "Grand Exchange prices have been reset to default values");
+			
+
+			//Save the data
+			SaveTradeData();
+        }
+
+        private void AddANewItemToTheExchange(Player player, string cmd,string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			
+			// Check the current store
+			var resource = input.JoinToString(" ");
+			var found = false;
+			for(var i=0; i<tradeList.Count; i++)
+			{
+				if(tradeList[i][0].ToLower() == resource.ToLower())
+				{
+					found = true;
+					break;
+				}
+			}
+			if(found)
+			{
+				PrintToChat(player, resource + "  already exists in the store!");
+				return;
+			}
+			
+			found = false;
+			// Check if the item exists in the defaults
+			var previousItem = new string[5];
+			for(var i=0; i<tradeDefaults.Count; i++)
+			{
+				if(tradeDefaults[i][0].ToLower() == resource.ToLower())
+				{
+					found = true;
+					previousItem = new string[5]{ tradeDefaults[i][0],tradeDefaults[i][1],tradeDefaults[i][2],tradeDefaults[i][1],tradeDefaults[i][1] };
+					if(tradeList.Count < i) i = tradeList.Count;
+					tradeList.Insert(i,previousItem);
+					PrintToChat(player, resource + " has been added to the store!");
+					break;
+				}
+			}
+			if(!found)
+			{
+				PrintToChat(player, resource + " does not appear in the original defaults list. If you want this item added, please add it to the defaults list first. (In the plugin) Note - It MUST be a real item or the system may crash!");
+				return;
+			}
+			
+			//Save the data
+			SaveTradeData();
+        }
+
+        private void BuyAnItemOnTheExchange(Player player, string cmd)
+        {
+            //Is player in the trade hub area?
+			if(!PlayerIsInTheRightTradeArea(player))
+			{
+				PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot trade outside of the designated trade area!");
+				return;
+			}
+			
+			//Open up the buy screen
+			player.ShowInputPopup("Grand Exchange", "What [00FF00]item [FFFFFF]would you like to buy on the [00FFFF]Grand Exchange[FFFFFF]?", "", "Submit", "Cancel", (options, dialogue1, data) => SelectItemToBeBought(player, options, dialogue1, data));
+        }
+
+        private void SellAnItemOnTheExchange(Player player, string cmd)
+        {
+            //Is player in the trade hub area?
+			if(!PlayerIsInTheRightTradeArea(player))
+			{
+				PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot trade outside of the designated trade area!");
+				return;
+			}
+
+			//Open up the sell screen
+			player.ShowInputPopup("Grand Exchange", "What [00FF00]item [FFFFFF]would you like to sell on the [00FFFF]Grand Exchange[FFFFFF]?", "", "Submit", "Cancel", (options, dialogue1, data) => SelectItemToBeSold(player, options, dialogue1, data));
+        }
+
+        private void ShowThePlayerTheGrandExchangeStore(Player player, string cmd)
+        {
+             // Are there any items on the store?
+            if(tradeList.Count == 0)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : The Grand Exchange is currently closed for business. Please try again later.");
+                return;
+            }
+            Log("Trade: Prices have been found!");
+
+			// Get the player's wallet contents
+			CheckWalletExists(player);
+			var credits = wallet[player.Name.ToLower()];
+			
+            // Check if player exists (For Unit Testing)
+            var buyIcon = "[008888]";
+            var sellIcon = "[008888]";
+            var itemText = "";
+            var itemsPerPage = 25;
+			var singlePage = false;
+			if(itemsPerPage > tradeList.Count) 
+			{
+				singlePage = true;
+				itemsPerPage = tradeList.Count;
+			}
+			
+            for(var i = 0; i<itemsPerPage;i++)
+            {
+				buyIcon = "[008888]";
+				sellIcon = "[008888]";
+                var resource = tradeList[i][0];
+                var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
+                var originalSellPrice = (int)((double)originalPrice * (sellPercentage/100));
+				var stackLimit = Int32.Parse(tradeList[i][2]);
+                var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
+                var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
+				
+				if(buyPrice >= originalPrice) buyIcon = "[00FF00]";
+				if(buyPrice > originalPrice + (originalPrice * 0.1)) buyIcon = "[888800]";
+				if(buyPrice > originalPrice + (originalPrice * 0.2)) buyIcon = "[FF0000]";
+				if(sellPrice <= originalSellPrice) sellIcon = "[00FF00]";
+				if(sellPrice < originalSellPrice - (originalSellPrice * 0.1)) sellIcon = "[888800]";
+				if(sellPrice < originalSellPrice - (originalSellPrice * 0.2)) sellIcon = "[FF0000]";
+				// if(buyPrice < originalPrice + (originalPrice * 0.3)) buyIcon = "[00FF00]";
+				// if(sellPrice > originalPrice) sellIcon = "[FF0000]";
+				// if(sellPrice < originalPrice) sellIcon = "[00FF00]";
+				var buyPriceText = buyPrice.ToString();
+				var sellPriceText = sellPrice.ToString();
+				
+				
+                itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
+            }
+			
+			itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
+			
+			if(singlePage) 
+			{
+				player.ShowPopup("Grand Exchange", itemText, "Exit", (selection, dialogue, data) => DoNothing(player, selection, dialogue, data));
+				return;
+			}
+			
+            //Display the Popup with the price
+				player.ShowConfirmPopup("Grand Exchange", itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithTradeList(player, selection, dialogue, data, itemsPerPage, itemsPerPage));
+        }
+
+        private void DisplayDefaultTradeList(Player player, string cmd,string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
+                return;
+            }
+			foreach(var item in tradeDefaults)
+			{
+				PrintToChat(player,item[0]);
+			}
+        }
+
+        private void SetThePriceOfAnItem(Player player, string cmd,string[] input)
+        {
+            if (!player.HasPermission("admin"))
+                {
+                    PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
+                    return;
+                }
+			
+			    if(input.Length == 0)
+			    {
+			        PrintToChat(player, "Usage: Type /setprice 'Resource_in_Quotes' <amount>");
+                    return;
+                }
+			
+			    var resource = input[0];
+			    var priceText = input[1];
+			    int price;
+			    if(Int32.TryParse(priceText, out price) == false)
+			    {
+				    PrintToChat(player, "Bad amount value entered!");
+				    return;
+			    }
+			
+			    priceText = (price * 1000).ToString();
+			
+			
+			    foreach(var item in tradeList)
+			    {
+				    if(item[0].ToLower() == resource.ToLower())
+				    {
+					    item[1] = priceText;
+					    item[3] = priceText;
+					    item[4] = priceText;
+				    }
+			    }
+			
+			    PrintToChat(player, "Changing price of " + resource + " to " + priceText);
+			
+			    // Save the trade data
+                SaveTradeData();
+        }
+
+		private void MarkLocation(Player player, double[] locSet, int locPosition)
+		{
+			double posX = player.Entity.Position.x;
+			double posZ = player.Entity.Position.z;
+			
+			locSet[locPosition] = posX;
+			locSet[locPosition + 1] = posZ;
+			
+			PrintToChat(player, "Position has been marked at [00FF00]" + posX.ToString() + "[FFFFFF], [00FF00]" + posZ.ToString());
+		}
 		
 		private bool PlayerIsInTheRightTradeArea(Player player)
 		{
@@ -600,7 +1117,6 @@ namespace Oxide.Plugins
 			//Save the data
 			SaveTradeData();
         }
-		
 		
 		private void OnEntityHealthChange(EntityDamageEvent damageEvent) 
 		{
@@ -760,247 +1276,6 @@ namespace Oxide.Plugins
 			// Save the data
 			SaveTradeData();
 		}
-		
-		// Buying an item from the exchange
-        [ChatCommand("givecredits")]
-        private void AdminGiveCredits(Player player, string cmd,string[] input)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
-                return;
-            }
-			
-			int amount;
-			if(Int32.TryParse(input[1], out amount) == false)
-			{
-				PrintToChat(player, "That was not a recognised amount!");
-                return;
-			}
-			
-			var playerName = input[0];
-			var target = Server.GetPlayerByName(playerName);
-			
-			if(target == null)
-			{
-				PrintToChat(player, "That player doesn't appear to be online right now!");
-                return;
-			}
-			
-			PrintToChat(player, "Giving " + amount.ToString() + " gold to " + playerName);
-			PrintToChat(target, "You have received an Admin gift of " + amount.ToString() + " gold.");
-			
-			CheckWalletExists(target);
-			GiveGold(target,amount);
-			
-			// Save the trade data
-            SaveTradeData();
-		}
-		
-		// Check a player's credits
-        [ChatCommand("checkcredits")]
-        private void AdminCheckPlayerCredits(Player player, string cmd,string[] input)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only admins can use this command.");
-                return;
-            }
-			
-			var playerName = input.JoinToString(" ");
-
-			var target = Server.GetPlayerByName(playerName);
-			if(target == null)
-			{
-				PrintToChat(player, "That player doesn't appear to be online right now!");
-                return;
-			}
-			
-			CheckWalletExists(target);
-			var goldAmount = wallet[target.Name.ToLower()];
-			PrintToChat(player, target.Name + " currently has " + goldAmount.ToString() + " gold.");
-		}
-		
-		// Remove an item from the store
-        [ChatCommand("removestoreitem")]
-        private void AdminRemoveItemFromStore(Player player, string cmd,string[] input)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only admins can use this command.");
-                return;
-            }
-			
-			var resource = input.JoinToString(" ");
-			int position = -1;
-			for(var i=0; i<tradeList.Count; i++)
-			{
-				if(tradeList[i][0].ToLower() == resource.ToLower())
-				{
-					position = i;
-					break;
-				}
-			}
-			if(position >= 0)
-			{
-				tradeList.RemoveAt(position);
-				PrintToChat(player, resource + "  has been removed from the store.");
-			}
-			else PrintToChat(player, "Could not find that item in the store to remove it.");
-			
-
-			//Save the data
-			SaveTradeData();
-		}
-
-		// Remove all items from the store
-        [ChatCommand("removeallstoreitems")]
-        private void AdminRemoveAllItemsFromStore(Player player, string cmd,string[] input)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only admins can use this command.");
-                return;
-            }
-			
-			tradeList = new Collection<string[]>();
-			
-			PrintToChat(player, "The exchange store has been wiped! Use /addstoreitem <itemname> to start filling it again.");
-			
-			//Save the data
-			SaveTradeData();
-		}
-
-		// Enable the PvP gold stealing
-        [ChatCommand("pvpgold")]
-        private void AllowGoldForPvP(Player player, string cmd)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only admins can use this command.");
-                return;
-            }
-			if(allowPvpGold)
-			{	
-				allowPvpGold = false;
-				PrintToChat(player,"PvP gold stealing is now [FF0000]OFF");
-				return;
-			}
-			allowPvpGold = true;
-			PrintToChat(player,"PvP gold stealing is now [00FF00]ON");
-			return;
-		}
-			
-		// Enable the PvE gold farming
-        [ChatCommand("pvegold")]
-        private void AllowGoldForPvE(Player player, string cmd)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only admins can use this command.");
-                return;
-            }
-			if(allowPveGold)
-			{	
-				allowPveGold = false;
-				PrintToChat(player,"PvE gold farming is now [FF0000]OFF");
-				return;
-			}
-			allowPveGold = true;
-			PrintToChat(player,"PvP gold farming is now [00FF00]ON");
-			return;
-		}
-			
-		// Remove an item from the store
-        [ChatCommand("restoredefaultprices")]
-        private void RevertAllPricesToDefaultValues(Player player, string cmd)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only admins can use this command.");
-                return;
-            }
-			
-			tradeList = new Collection<string[]>();
-			foreach(var item in tradeDefaults)
-			{
-				var newItem = new string[5]{ item[0], item[1], item[2], item[1], item[1] };
-				tradeList.Add(newItem);
-			}
-			PrintToChat(player, "Grand Exchange prices have been reset to default values");
-			
-
-			//Save the data
-			SaveTradeData();
-		}
-
-		// Add an item to the store
-        [ChatCommand("addstoreitem")]
-        private void AdminAddItemToStore(Player player, string cmd,string[] input)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only admins can use this command.");
-                return;
-            }
-			
-			// Check the current store
-			var resource = input.JoinToString(" ");
-			var found = false;
-			for(var i=0; i<tradeList.Count; i++)
-			{
-				if(tradeList[i][0].ToLower() == resource.ToLower())
-				{
-					found = true;
-					break;
-				}
-			}
-			if(found)
-			{
-				PrintToChat(player, resource + "  already exists in the store!");
-				return;
-			}
-			
-			found = false;
-			// Check if the item exists in the defaults
-			var previousItem = new string[5];
-			for(var i=0; i<tradeDefaults.Count; i++)
-			{
-				if(tradeDefaults[i][0].ToLower() == resource.ToLower())
-				{
-					found = true;
-					previousItem = new string[5]{ tradeDefaults[i][0],tradeDefaults[i][1],tradeDefaults[i][2],tradeDefaults[i][1],tradeDefaults[i][1] };
-					if(tradeList.Count < i) i = tradeList.Count;
-					tradeList.Insert(i,previousItem);
-					PrintToChat(player, resource + " has been added to the store!");
-					break;
-				}
-			}
-			if(!found)
-			{
-				PrintToChat(player, resource + " does not appear in the original defaults list. If you want this item added, please add it to the defaults list first. (In the plugin) Note - It MUST be a real item or the system may crash!");
-				return;
-			}
-			
-			//Save the data
-			SaveTradeData();
-		}
-		
-
-        // Buying an item from the exchange
-        [ChatCommand("buy")]
-        private void BuyAnItem(Player player, string cmd)
-        {
-			//Is player in the trade hub area?
-			if(!PlayerIsInTheRightTradeArea(player))
-			{
-				PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot trade outside of the designated trade area!");
-				return;
-			}
-			
-			//Open up the buy screen
-			player.ShowInputPopup("Grand Exchange", "What [00FF00]item [FFFFFF]would you like to buy on the [00FFFF]Grand Exchange[FFFFFF]?", "", "Submit", "Cancel", (options, dialogue1, data) => SelectItemToBeBought(player, options, dialogue1, data));
-        }
 		
 		private void GiveGold(Player player,int amount)
 		{
@@ -1246,21 +1521,6 @@ namespace Oxide.Plugins
 			return total;
 		}
 
-        // Selling an item on the exchange
-        [ChatCommand("sell")]
-        private void SellAnItem(Player player, string cmd)
-        {
-			//Is player in the trade hub area?
-			if(!PlayerIsInTheRightTradeArea(player))
-			{
-				PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot trade outside of the designated trade area!");
-				return;
-			}
-
-			//Open up the sell screen
-			player.ShowInputPopup("Grand Exchange", "What [00FF00]item [FFFFFF]would you like to sell on the [00FFFF]Grand Exchange[FFFFFF]?", "", "Submit", "Cancel", (options, dialogue1, data) => SelectItemToBeSold(player, options, dialogue1, data));
-        }
-
 		private void SelectItemToBeSold(Player player, Options selection, Dialogue dialogue, object contextData)
 		{
 			if (selection == Options.Cancel)
@@ -1337,73 +1597,6 @@ namespace Oxide.Plugins
 			player.ShowConfirmPopup("Grand Exchange", message, "Submit", "Cancel", (options, dialogue1, data) => CheckIfThePlayerHasTheResourceToSell(player, options, dialogue, data, resourceDetails, totalValue, amount));
 		}
 		
-        // View the prices of items on the exchange
-        [ChatCommand("store")]
-        private void ViewTheExchangeStore(Player player, string cmd)
-        {
-            // Are there any items on the store?
-            if(tradeList.Count == 0)
-            {
-                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : The Grand Exchange is currently closed for business. Please try again later.");
-                return;
-            }
-            Log("Trade: Prices have been found!");
-
-			// Get the player's wallet contents
-			CheckWalletExists(player);
-			var credits = wallet[player.Name.ToLower()];
-			
-            // Check if player exists (For Unit Testing)
-            var buyIcon = "[008888]";
-            var sellIcon = "[008888]";
-            var itemText = "";
-            var itemsPerPage = 25;
-			var singlePage = false;
-			if(itemsPerPage > tradeList.Count) 
-			{
-				singlePage = true;
-				itemsPerPage = tradeList.Count;
-			}
-			
-            for(var i = 0; i<itemsPerPage;i++)
-            {
-				buyIcon = "[008888]";
-				sellIcon = "[008888]";
-                var resource = tradeList[i][0];
-                var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
-                var originalSellPrice = (int)((double)originalPrice * (sellPercentage/100));
-				var stackLimit = Int32.Parse(tradeList[i][2]);
-                var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
-                var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
-				
-				if(buyPrice >= originalPrice) buyIcon = "[00FF00]";
-				if(buyPrice > originalPrice + (originalPrice * 0.1)) buyIcon = "[888800]";
-				if(buyPrice > originalPrice + (originalPrice * 0.2)) buyIcon = "[FF0000]";
-				if(sellPrice <= originalSellPrice) sellIcon = "[00FF00]";
-				if(sellPrice < originalSellPrice - (originalSellPrice * 0.1)) sellIcon = "[888800]";
-				if(sellPrice < originalSellPrice - (originalSellPrice * 0.2)) sellIcon = "[FF0000]";
-				// if(buyPrice < originalPrice + (originalPrice * 0.3)) buyIcon = "[00FF00]";
-				// if(sellPrice > originalPrice) sellIcon = "[FF0000]";
-				// if(sellPrice < originalPrice) sellIcon = "[00FF00]";
-				var buyPriceText = buyPrice.ToString();
-				var sellPriceText = sellPrice.ToString();
-				
-				
-                itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
-            }
-			
-			itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
-			
-			if(singlePage) 
-			{
-				player.ShowPopup("Grand Exchange", itemText, "Exit", (selection, dialogue, data) => DoNothing(player, selection, dialogue, data));
-				return;
-			}
-			
-            //Display the Popup with the price
-				player.ShowConfirmPopup("Grand Exchange", itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithTradeList(player, selection, dialogue, data, itemsPerPage, itemsPerPage));
-        }
-
         
 		private void ContinueWithTradeList(Player player, Options selection, Dialogue dialogue, object contextData,int itemsPerPage, int currentItemCount)
 		{
@@ -1494,72 +1687,6 @@ namespace Oxide.Plugins
 			return finalText;
 		}
 		
-		// Buying an item from the exchange
-        [ChatCommand("listtradedefaults")]
-        private void ListTheDefaultTrades(Player player, string cmd,string[] input)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
-                return;
-            }
-			foreach(var item in tradeDefaults)
-			{
-				PrintToChat(player,item[0]);
-			}
-		}
-		
-		// Buying an item from the exchange
-        [ChatCommand("setprice")]
-        private void AdminSetResourcePrice(Player player, string cmd,string[] input)
-        {
-			if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
-                return;
-            }
-			
-			if(input.Length == 0)
-			{
-			    PrintToChat(player, "Usage: Type /setprice 'Resource_in_Quotes' <amount>");
-                return;
-            }
-			
-			var resource = input[0];
-			var priceText = input[1];
-			int price;
-			if(Int32.TryParse(priceText, out price) == false)
-			{
-				PrintToChat(player, "Bad amount value entered!");
-				return;
-			}
-			
-			priceText = (price * 1000).ToString();
-			
-			
-			foreach(var item in tradeList)
-			{
-				if(item[0].ToLower() == resource.ToLower())
-				{
-					item[1] = priceText;
-					item[3] = priceText;
-					item[4] = priceText;
-				}
-			}
-			
-			PrintToChat(player, "Changing price of " + resource + " to " + priceText);
-			
-			// Save the trade data
-            SaveTradeData();
-		}
-		
-		// Check my wallet
-        [ChatCommand("wallet")]
-        private void CheckHowMuchMoneyAPlayerhas(Player player, string cmd)
-        {
-			CheckWalletExists(player);
-			var walletAmount = wallet[player.Name.ToLower()];
-			PrintToChat(player,"You currently have [00FF00]" + walletAmount.ToString() + "[FFFF00]g[FFFFFF].");
-		}
+#endregion
 	}
 }
