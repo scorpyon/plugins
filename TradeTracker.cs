@@ -671,6 +671,12 @@ namespace Oxide.Plugins
                 return;
             }
 			
+			if(input.Length < 2) 
+			{
+				PrintToChat(player, "Enter a player name followed by the amount to give.");
+                return;
+			}
+			
 			int amount;
 			if(Int32.TryParse(input[1], out amount) == false)
 			{

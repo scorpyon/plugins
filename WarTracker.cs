@@ -14,10 +14,11 @@ using CodeHatch.Networking.Events.Entities.Players;
 using CodeHatch.Networking.Events.Players;
 using CodeHatch.Engine.Core.Cache;
 using CodeHatch.Blocks.Networking.Events;
+using CodeHatch.ItemContainer;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.1.0")]
+    [Info("WarTracker", "Scorpyon", "1.1.1")]
     public class WarTracker : ReignOfKingsPlugin
     {
         //
@@ -49,6 +50,7 @@ namespace Oxide.Plugins
         // WarList[1] = the instigating Guild name
         // WarList[2] = the enemy guild name
         private const int WarTimerInterval = 5;
+        void Log(string msg) => Puts($"{Title} : {msg}");
 
         // SAVE DATA ===============================================================================================
 
@@ -227,14 +229,16 @@ namespace Oxide.Plugins
 				
 				if (!isAtWar)
                 {
-                    cubeDamageEvent.Cancel("Can Only Attack Bases When At War");
-                    cubeDamageEvent.Damage.Amount = 0f;
-                    PrintToChat(cubeDamageEvent.Damage.DamageSource.Owner,
-                        "[FF0000]War General : [FFFFFF]You cannot attack a base when you are not at war with a guild!");
+					var oldInventory = player.GetInventory().Contents;
+					//cubeDamageEvent.Cancel("Can Only Attack Bases When At War");
+                    //cubeDamageEvent.Damage.Amount = 0f;
+					var message = "[FF0000]War General : [00FF00]" + player.DisplayName + "[FFFFFF]! You cannot attack a base when you are not at war with a guild!";
+                    PrintToChat(message);
+					Log(message);
                 }
             }
         }
-
+		
         private void WarReport()
         {
             var hours = "";
