@@ -20,13 +20,12 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.5")]
+    [Info("Trade Tracker", "Scorpyon", "1.1.6")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
 		private const double maxDeflation = 0; // This is the deflation modifier. This is the most that a price can drop below its average price to buy and above it's price to sell(Percentage)
 		private const int priceDeflationTime = 3600; // This dictates the number of seconds for each tick which brings the prices back towards their original values
-		private double sellPercentage = 50; // This controls the sell percentage price (of the original price) that items sell for.
 		private const int goldRewardForPvp = 10000; // This is the maximum amount of gold that can be stolen from a player for killing them.
 		private const int goldRewardForPve = 100; // This is the maximum amount rewarded to a player for killing monsters, etc. (When harvesting the dead body)
 		private bool allowPvpGold = true; // Turns on/off gold for PVP
@@ -285,6 +284,7 @@ namespace Oxide.Plugins
 		private const int maxPossibleGold = 21000000; // DO NOT RAISE THIS ANY HIGHER - 32-bit INTEGER FLOOD WARNING	
 
 		private Collection<double[]> markList = new Collection<double[]>();
+		private double sellPercentage = 50; // Use the /sellPercentage command to change this NOT here!
 
 #endregion
 
@@ -411,7 +411,7 @@ namespace Oxide.Plugins
 		    GetThePlayersCurrentLocation(player, cmd, args);
 		}
 		
-		// USE /marktrade <int> to designate marks for that position
+		// USE /markadd <int> to designate marks for that position
 		[ChatCommand("markadd")]
         private void MarkAreaForTrade(Player player, string cmd, string[] input)
 		{
@@ -426,7 +426,7 @@ namespace Oxide.Plugins
 		    RemoveAllMarksForTradeArea(player, cmd, input);
 		}
 		
-		// Remove all marks that have been made
+		// Toggle safe area mode for trade areas
 		[ChatCommand("safetrade")]
         private void MakeTradeAreasSafe(Player player, string cmd)
 		{
@@ -859,6 +859,7 @@ namespace Oxide.Plugins
 					if(tradeList.Count < i) i = tradeList.Count;
 					tradeList.Insert(i,previousItem);
 					PrintToChat(player, resource + " has been added to the store!");
+				    ForcePriceAdjustment();
 					break;
 				}
 			}
