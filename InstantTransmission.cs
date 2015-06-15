@@ -40,13 +40,14 @@ namespace Oxide.Plugins
 #region Private Methods
 
 //        private void OnPlayerChat(PlayerChatEvent chatEvent)
-        private void OnPlayerChat(PlayerEvent chatEvent)
-        {
-            if(chatEvent != null && chatEvent.Player != null)
-            {
-                chatEvent.Player.DisplayNameFormat = "[00FF00](KING) [FFFF00]%name%[FFFFFF]";
-            }
-        }
+        // private void OnPlayerChat(PlayerEvent chatEvent)
+        // {
+            // if(chatEvent != null && chatEvent.Player != null)
+            // {
+                // chatEvent.Player.DisplayNameFormat = "[00FF00](KING) [FFFF00]%name%[FFFFFF]";
+				
+            // }
+        // }
 
         private void TeleportToLocation(Player player, string cmd, string[] input)
         {
