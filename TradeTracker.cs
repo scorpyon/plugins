@@ -20,7 +20,7 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.3")]
+    [Info("Trade Tracker", "Scorpyon", "1.1.4")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
@@ -31,7 +31,7 @@ namespace Oxide.Plugins
 		private const int goldRewardForPve = 100; // This is the maximum amount rewarded to a player for killing monsters, etc. (When harvesting the dead body)
 		private bool allowPvpGold = true; // Turns on/off gold for PVP
 		private bool allowPveGold = true; // Turns on/off gold for PVE
-		private bool tradeAreaIsSafe = true; // Determines whether the marked safe area is Safe against being attacked / PvP
+		private bool tradeAreaIsSafe = false; // Determines whether the marked safe area is Safe against being attacked / PvP
 
         private Collection<string[]> LoadDefaultTradeValues()
         {
@@ -483,6 +483,29 @@ namespace Oxide.Plugins
             }
 			markList = new Collection<double[]>();
             PrintToChat(player, "All marks have been removed.");
+			
+			SaveTradeData();
+        }
+		
+		// Remove all marks that have been made
+		[ChatCommand("safetrade")]
+        private void MakeTradeAreasSafe(Player player, string cmd)
+        {
+			if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+		    if (tradeAreaIsSafe)
+		    {
+		        tradeAreaIsSafe = false;
+		        PrintToChat(player, "Trading areas are now open to PvP and attacks.");
+		    }
+		    else
+		    {
+		        tradeAreaIsSafe = true;
+                PrintToChat(player, "Trading areas are now safe.");
+		    }
 			
 			SaveTradeData();
         }
