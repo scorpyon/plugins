@@ -23,8 +23,12 @@ namespace Oxide.Plugins
     [Info("Rank Tracker", "Scorpyon", "1.0.1")]
     public class RankTracker : ReignOfKingsPlugin
     {
+		private int xpRewardForPve = 5; // (Maximum xp - given in random increments 1-5)
+		
         void Log(string msg) => Puts($"{Title} : {msg}");
 		private Dictionary<string,int> rankList = new Dictionary<string,int>();
+		private System.Random random = new System.Random();
+		
 		
 #region User Commands
 
@@ -102,6 +106,27 @@ namespace Oxide.Plugins
 
 #region Private Methods
 
+		private string GetRank(int xp)
+        {
+			var rank = "[003333]Civilian[FFFFFF]";
+			
+			if(xp > 1000000) return "[FB0000]High Commander[FFFFFF]";
+			if(xp > 500000) return "[FE6542]Commander[FFFFFF]";
+			if(xp > 200000) return "[FCCE7D]Chancellor[FFFFFF]";
+			if(xp > 100000) return "[E0FC7D]Baron[FFFFFF]";
+			if(xp > 50000) return "[8FFC7D]Minor Baron[FFFFFF]";
+			if(xp > 20000) return "[A0F8E2]Lord[FFFFFF]";
+			if(xp > 10000) return "[A0D8F8]Minor Lord[FFFFFF]";
+			if(xp > 5000) return "[7688F7]Knight[FFFFFF]";
+			if(xp > 2000) return "[C8C6FA]Squire[FFFFFF]";
+			if(xp > 1000) return "[E9C46D]Knave[FFFFFF]";
+			if(xp > 500) return "[9A6BA0]Manservant[FFFFFF]";
+			if(xp > 250) return "[6C857C]Servant[FFFFFF]";
+			if(xp > 100) return "[AEB5B2]Serf[FFFFFF]";
+			
+			return rank;
+        }
+		
         private void SetTheRankXPForAPlayer(Player player, string cmd, string[] input)
         {
             if (!player.HasPermission("admin"))
@@ -174,36 +199,33 @@ namespace Oxide.Plugins
 		}
 
 		
-		//        private void OnPlayerChat(PlayerChatEvent chatEvent)
-        // private void OnPlayerChat(PlayerEvent chatEvent)
-        // {
-            // if(chatEvent != null && chatEvent.Player != null)
-            // {
-                // chatEvent.Player.DisplayNameFormat = "[00FF00](KING) [FFFF00]%name%[FFFFFF]";
+		private void OnEntityHealthChange(EntityDamageEvent damageEvent) 
+		{
+			if (!damageEvent.Entity.IsPlayer)
+			{
+				var victim = damageEvent.Entity;
+				Health h = victim.TryGet<Health>();
+				if(h.ToString().Contains("Plague Villager")) return;
+				if (!h.IsDead) return;
 				
-            // }
-        // }
+				var hunter = damageEvent.Damage.DamageSource.Owner;
+				
+				// Give the rewards to the player
+				var xp = random.Next(1,xpRewardForPve);
+				
+				// Special bonuses
+				if(h.ToString().Contains("Werewolf")) xp = xp + 10;
+				if(h.ToString().Contains("Bear")) xp = xp + 5;
+				if(h.ToString().Contains("Wolf")) xp = xp + 3;
+
+				// Notify everyone
+				PrintToChat(hunter, "[FFFFFF]You learned from your hunting and gained some experience! [FFFFFF]([00FF00]+" + xp.ToString() + "[FFFFFF])");
+				AddRankXp(hunter,xp);
+				
+				SaveRankData();
+			}
+		}
 		
-		private string GetRank(int xp)
-        {
-			var rank = "[003333]Civilian[FFFFFF]";
-			
-			if(xp > 1000000) return "[FB0000]High Commander[FFFFFF]";
-			if(xp > 500000) return "[FE6542]Commander[FFFFFF]";
-			if(xp > 200000) return "[FCCE7D]Chancellor[FFFFFF]";
-			if(xp > 100000) return "[E0FC7D]Baron[FFFFFF]";
-			if(xp > 50000) return "[8FFC7D]Minor Baron[FFFFFF]";
-			if(xp > 20000) return "[A0F8E2]Lord[FFFFFF]";
-			if(xp > 10000) return "[A0D8F8]Minor Lord[FFFFFF]";
-			if(xp > 5000) return "[7688F7]Knight[FFFFFF]";
-			if(xp > 2000) return "[C8C6FA]Squire[FFFFFF]";
-			if(xp > 1000) return "[E9C46D]Knave[FFFFFF]";
-			if(xp > 500) return "[9A6BA0]Manservant[FFFFFF]";
-			if(xp > 250) return "[6C857C]Servant[FFFFFF]";
-			if(xp > 100) return "[AEB5B2]Serf[FFFFFF]";
-			
-			return rank;
-        }
 		
 		private void AddRankXp(Player player, int amount)
 		{	
