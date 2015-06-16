@@ -179,6 +179,7 @@ namespace Oxide.Plugins
             defaultTradeList.Add(new string[3] { "Standing Iron Torch", "800000", "1" });
             defaultTradeList.Add(new string[3] { "Steel Axe", "2500000", "1" });
             defaultTradeList.Add(new string[3] { "Steel Battle Axe", "2500000", "1" });
+            defaultTradeList.Add(new string[3] { "Steel Battle War Hammer", "2500000", "1" });
             defaultTradeList.Add(new string[3] { "Steel Bolt", "250000", "100" });
             defaultTradeList.Add(new string[3] { "Steel Cage", "4000000", "1" });
             defaultTradeList.Add(new string[3] { "Steel Chest", "3000000", "10" });
