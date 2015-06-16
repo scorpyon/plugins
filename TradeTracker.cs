@@ -17,6 +17,8 @@ using CodeHatch.Networking.Events.Players;
 using CodeHatch.ItemContainer;
 using CodeHatch.UserInterface.Dialogues;
 //using CodeHatch.Inventory.Blueprints.Components;
+using CodeHatch.Networking.Events.Entities.Objects.Gadgets;
+using CodeHatch.Engine.Events.Prefab;
 
 namespace Oxide.Plugins
 {
@@ -284,7 +286,7 @@ namespace Oxide.Plugins
 		private System.Random random = new System.Random();
 
         void Log(string msg) => Puts($"{Title} : {msg}");
-		private const int maxPossibleGold = 21000000; // DO NOT RAISE THIS ANY HIGHER - 32-bit INTEGER FLOOD WARNING	
+		private const int maxPossibleGold = 2100000000; // DO NOT RAISE THIS ANY HIGHER - 32-bit INTEGER FLOOD WARNING	
 
 		private Collection<double[]> markList = new Collection<double[]>();
 		private double sellPercentage = 50; // Use the /sellPercentage command to change this NOT here!
@@ -384,6 +386,13 @@ namespace Oxide.Plugins
 
 #region User Commands
         
+        // View the items in a player's shop
+        [ChatCommand("shop")]
+        private void VisitAShop(Player player, string cmd)
+        {
+            ViewAPlayersShop(player, cmd);
+        }
+
         // View the items in your shop
         [ChatCommand("myshop")]
         private void CheckMyShopStock(Player player, string cmd)
@@ -554,6 +563,23 @@ namespace Oxide.Plugins
 #endregion
 
 #region Private Methods
+
+		// private void OnGadgetPlace(NetworkInstantiateEvent e)
+		// {
+			// //gadgeEntity.name;
+			// Log("Object was placed!");
+		// }
+		
+		// private void OnObjectDeploy(NetworkInstantiateEvent e)
+		// {
+			// //gadgeEntity.name;
+			// Log("Object was placed!");
+		// }
+		
+		private void ViewAPlayersShop(Player player, string cmd)
+		{
+			ShowTheShopListForThisPlayer(player);
+		}
 
         private void ViewThisShop(Player player)
         {
@@ -744,6 +770,7 @@ namespace Oxide.Plugins
                 //If the item already exists, add it to the current stock
                 var position = 0;
                 var itemFound = false;
+				
                 foreach (var item in shop)
                 {
                     if (item[0].ToLower() == resource.ToLower())
@@ -759,6 +786,7 @@ namespace Oxide.Plugins
                             }
                         }
                         
+						
                         //If the limit is full
                         var stockMaxLimit = playerShopStackLimit * stackLimit;
                         if (Int32.Parse(item[2]) >= stockMaxLimit)
@@ -782,6 +810,14 @@ namespace Oxide.Plugins
                 }
                 if (!itemFound)
                 {
+								
+					// If the shop has it's full limit of items
+					if(shop.Count >= playerShopMaxSlots)
+					{
+						PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot any new items to your store.");
+            			return;
+					}
+
                     stock[0] = resource;
                     stock[1] = defaultPrice.ToString();
                     stock[2] = amount.ToString();
