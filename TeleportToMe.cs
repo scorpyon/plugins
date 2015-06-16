@@ -22,6 +22,11 @@ namespace Oxide.Plugins
         [ChatCommand("teletome")]
         private void AdminTeleportToLocation(Player player, string cmd, string[] input)
         {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
             if(input.Length < 1) return;
             var playerName = input[0];
             TeleportPlayerToMe(player, playerName);
