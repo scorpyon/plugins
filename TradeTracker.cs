@@ -20,7 +20,7 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.6")]
+    [Info("Trade Tracker", "Scorpyon", "1.1.7")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
@@ -31,6 +31,8 @@ namespace Oxide.Plugins
 		private bool allowPvpGold = true; // Turns on/off gold for PVP
 		private bool allowPveGold = true; // Turns on/off gold for PVE
 		private bool tradeAreaIsSafe = false; // Determines whether the marked safe area is Safe against being attacked / PvP
+        private int playerShopStackLimit = 5; // Determines the maximum number of stacks of an item a player can have in their shop
+        private int playerShopMaxSlots = 10; // Determines the maximum number of individual items the player can stock (Prevents using this as a 'Bag of Holding' style Chest!!)
 
 #region Default Trade Values
         private Collection<string[]> LoadDefaultTradeValues()
@@ -286,6 +288,12 @@ namespace Oxide.Plugins
 		private Collection<double[]> markList = new Collection<double[]>();
 		private double sellPercentage = 50; // Use the /sellPercentage command to change this NOT here!
 
+        private Dictionary<string,Collection<string[]>> playerShop = new Dictionary<string,Collection<string[]>>();
+        // 0 - Item name
+        // 1 - Price
+        // 2 - Amount
+
+
 #endregion
 
 #region Save and Load Data Methods
@@ -298,6 +306,7 @@ namespace Oxide.Plugins
             wallet = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string,int>>("SavedTradeWallet");
             markList = Interface.GetMod().DataFileSystem.ReadObject<Collection<double[]>>("SavedMarkList");
             sellPercentage = Interface.GetMod().DataFileSystem.ReadObject<double>("SavedSellPercentage");
+            playerShop = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string,Collection<string[]>>>("SavedPlayerShop");
         }
 
         private void SaveTradeData()
@@ -307,11 +316,13 @@ namespace Oxide.Plugins
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeWallet", wallet);
             Interface.GetMod().DataFileSystem.WriteObject("SavedMarkList", markList);
             Interface.GetMod().DataFileSystem.WriteObject("SavedSellPercentage", sellPercentage);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShop", playerShop);
         }
 		
 		private void OnPlayerConnected(Player player)
 		{
 			CheckWalletExists(player);
+			CheckShopExists(player);
 			
 			// Save the trade data
             SaveTradeData();
@@ -325,6 +336,16 @@ namespace Oxide.Plugins
 			if(!wallet.ContainsKey(player.Name.ToLower()))
 			{
 				wallet.Add(player.Name.ToLower(),0);
+			}
+		}
+        
+		private void CheckShopExists(Player player)
+		{
+			//Check if the player has a wallet yet
+			if(playerShop.Count < 1) playerShop.Add(player.Name.ToLower(),new Collection<string[]>());
+			if(!playerShop.ContainsKey(player.Name.ToLower()))
+			{
+				playerShop.Add(player.Name.ToLower(),new Collection<string[]>());
 			}
 		}
 		
@@ -362,6 +383,21 @@ namespace Oxide.Plugins
 
 #region User Commands
         
+        // View the items in your shop
+        [ChatCommand("myshop")]
+        private void CheckMyShopStock(Player player, string cmd)
+        {
+            ViewMyShop(player, cmd);
+        }
+
+        // Stock items in your shop
+        [ChatCommand("addstockitem")]
+        private void AddAnItemToThePlayerShop(Player player, string cmd,string[] input)
+        {
+            AddStockToThePlayerShop(player, cmd, input);
+        }
+
+
 		// Buying an item from the exchange
         [ChatCommand("listtradedefaults")]
         private void ListTheDefaultTrades(Player player, string cmd,string[] input)
@@ -517,6 +553,249 @@ namespace Oxide.Plugins
 #endregion
 
 #region Private Methods
+
+        private void ViewThisShop(Player player)
+        {
+            ShowTheShopListForThisPlayer(player);
+        }
+
+        
+        private void ShowTheShopListForThisPlayer(Player player)
+        {
+            // Find this player's shop
+            var playerName = player.Name.ToLower();
+            if (!playerShop.ContainsKey(playerName))
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : This shop doesn't appear to be open right now.");
+                return;
+            }
+
+            var myShop = playerShop[playerName];
+
+             // Are there any items on the store?
+            if(myShop.Count < 1)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : This shop is currently closed for business and has no items available.");
+                return;
+            }
+
+			// Get the player's wallet contents
+			CheckWalletExists(player);
+			var credits = wallet[player.Name.ToLower()];
+			
+            var buyIcon = "[008888]";
+            var sellIcon = "[008888]";
+            var itemText = "";
+            var itemsPerPage = 25;
+			var singlePage = false;
+
+			if(itemsPerPage > myShop.Count) 
+			{
+				singlePage = true;
+				itemsPerPage = myShop.Count;
+			}
+			
+            for(var i = 0; i<itemsPerPage;i++)
+            {
+				buyIcon = "[00FF00]";
+                var resource = myShop[i][0];
+				var stockAmount = Int32.Parse(myShop[i][2]);
+                var buyPrice = Int32.Parse(myShop[i][1]) / priceModifier;
+				var buyPriceText = buyPrice.ToString();
+                resource = Capitalise(resource);
+
+                itemText = itemText + "[00FFFF]" + resource + " [FFFFFF]( [FF0000]" + stockAmount.ToString() + "[FFFFFF] );  Price: " + buyIcon + buyPriceText + "[FFFF00]g\n";
+            }
+			
+			itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString() + "[FFFF00]g";
+
+            var shopName = Capitalise(playerName) + "'s Store";
+			if(singlePage) 
+			{
+				player.ShowPopup(shopName, itemText, "Exit", (selection, dialogue, data) => DoNothing(player, selection, dialogue, data));
+				return;
+			}
+			
+            //Display the Popup with the price
+				player.ShowConfirmPopup(shopName, itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithPlayerShopList(player, myShop, selection, dialogue, data, itemsPerPage, itemsPerPage));
+        }
+
+        private void ContinueWithPlayerShopList(Player player, Collection<string[]> myShop, Options selection, Dialogue dialogue, object contextData,int itemsPerPage, int currentItemCount)
+        {
+            var playerName = player.Name;
+            if (selection != Options.Yes)
+            {
+                //Leave
+                return;
+            }
+			
+            if((currentItemCount + itemsPerPage) > tradeList.Count)
+            {
+                itemsPerPage = tradeList.Count - currentItemCount;
+            }
+            
+            // Get the player's wallet contents
+            CheckWalletExists(player);
+            var credits = wallet[player.Name.ToLower()];
+			
+            var buyIcon = "[008888]";
+            var sellIcon = "[008888]";
+            var itemText = "";
+            var singlePage = false;
+
+            for(var i = currentItemCount; i<itemsPerPage + currentItemCount; i++)
+            {
+                buyIcon = "[00FF00]";
+                var resource = myShop[i][0];
+                var stockAmount = Int32.Parse(myShop[i][2]);
+                var buyPrice = Int32.Parse(myShop[i][1]) / priceModifier;
+                var buyPriceText = buyPrice.ToString();
+				resource = Capitalise(resource);
+
+                itemText = itemText + "[00FFFF]" + resource + " [FFFFFF]( [FF0000]" + stockAmount.ToString() + "[FFFFFF] );  Price: " + buyIcon + buyPriceText + "[FFFF00]g\n";
+            }
+			
+            itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString() + "[FFFF00]g";
+
+            currentItemCount = currentItemCount + itemsPerPage;
+            var shopName = Capitalise(playerName) + "'s Store";
+
+            // Display the Next page
+            if(currentItemCount < tradeList.Count)
+            {
+                player.ShowConfirmPopup(shopName, itemText,  "Next Page", "Exit", (options, dialogue1, data) => ContinueWithPlayerShopList(player, myShop, options, dialogue1, data, itemsPerPage, currentItemCount));
+            }
+            else
+            {
+                PlayerExtensions.ShowPopup(player,shopName, itemText, "Yes",  (newselection, dialogue2, data) => DoNothing(player, newselection, dialogue2, data));
+            }
+        }
+
+        private void ViewMyShop(Player player , string cmd )
+        {
+            var playerName = player.Name;
+
+            // Build the shop if it doesn't exist
+            CheckShopExists(player);
+
+            //Is there anything in the shop right now?
+            if (playerShop[playerName.ToLower()].Count < 1)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : Your shop is currently empty.");
+                return;
+            }
+            ViewThisShop(player);
+        }
+
+        private void AddStockToThePlayerShop(Player player , string cmd , string[] input)
+        {
+            var playerName = player.Name;
+
+            if (input.Length < 2)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : Please use the format - /addstockitem '<item_name>' <amount>");
+                return;
+            }
+
+            int amount;
+			if(Int32.TryParse(input[1], out amount) == false)
+			{	
+				PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You entered an invalid amount. Please use the format - /addstockitem '<item_name>' <amount>");
+				return;
+			}
+
+            var resource = Capitalise(input[0]);
+
+			// Check if the item exists in the default list
+            var found = false;
+			var previousItem = new string[5];
+            var defaultPrice = 0;
+			for(var i=0; i<tradeDefaults.Count; i++)
+			{
+				if(tradeDefaults[i][0].ToLower() == resource.ToLower())
+				{
+					found = true;
+				    defaultPrice = Int32.Parse(tradeDefaults[i][1]);
+					break;
+				}
+			}
+			if(!found)
+			{
+				PrintToChat(player, resource + " does not appear in the original defaults list. If you want this item added, please ask an admin to add it to the defaults list first. [FF0000]Note :[FFFFFF] It MUST be a real item that exists in the game currently.");
+				return;
+			}
+
+            // We have the item and the amount. Does the player have this in his inventory to stock?
+            if(CanRemoveResource(player, resource, amount) == false)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You don't appear to have that much resource in your inventory right now.");
+				return;
+            }
+            
+            // Add this resource to the player's shop
+            if (playerShop.ContainsKey(playerName.ToLower()))
+            {
+                var shop = playerShop[playerName.ToLower()];
+                //PrintToChat(shop[0][0]);
+                //return;
+                var stock = new string[3];
+
+                //If the item already exists, add it to the current stock
+                var position = 0;
+                var itemFound = false;
+                foreach (var item in shop)
+                {
+                    if (item[0].ToLower() == resource.ToLower())
+                    {
+                        itemFound = true;
+                        var stackLimit = 0;
+                        var stockAmount = Int32.Parse(item[2]);
+                        foreach (var defaultItem in tradeDefaults)
+                        {
+                            if (defaultItem[0].ToLower() == item[0].ToLower())
+                            {
+                                stackLimit = Int32.Parse(defaultItem[2]);
+                            }
+                        }
+                        
+                        //If the limit is full
+                        var stockMaxLimit = playerShopStackLimit * stackLimit;
+                        if (Int32.Parse(item[2]) >= stockMaxLimit)
+                        {
+                            PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot stock any more of that item right now.");
+            				return;
+                        }
+                        
+                        //If this will hit the limit
+                        if (stockAmount + amount > stockMaxLimit)
+                        {
+                            amount = stockMaxLimit - stockAmount;
+                            PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : Your shop is now fully stocked with " + resource);
+                        }
+                        var finalAmount = stockAmount + amount;
+
+                        stock[0] = resource;
+                        item[1] = defaultPrice.ToString();
+                        item[2] = finalAmount.ToString();
+                    }
+                }
+                if (!itemFound)
+                {
+                    stock[0] = resource;
+                    stock[1] = defaultPrice.ToString();
+                    stock[2] = amount.ToString();
+                    shop.Add(stock);
+                    //PrintToChat(player, "Shop details: " + stock[0] + " " + stock[1] + " " + stock[2]);
+                }
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You have updated your shop inventory!");
+            }
+
+            //Remove the resource from the player's inventory
+            RemoveItemsFromInventory(player, resource, amount);
+
+			//Save the data
+			SaveTradeData();
+        }
 
         private void CheckHowMuchGoldICurrentlyHave(Player player, string cmd)
         {
@@ -905,70 +1184,6 @@ namespace Oxide.Plugins
 			player.ShowInputPopup("Grand Exchange", "What [00FF00]item [FFFFFF]would you like to sell on the [00FFFF]Grand Exchange[FFFFFF]?", "", "Submit", "Cancel", (options, dialogue1, data) => SelectItemToBeSold(player, options, dialogue1, data));
         }
 
-        private void ShowThePlayerTheGrandExchangeStore(Player player, string cmd)
-        {
-             // Are there any items on the store?
-            if(tradeList.Count == 0)
-            {
-                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : The Grand Exchange is currently closed for business. Please try again later.");
-                return;
-            }
-            Log("Trade: Prices have been found!");
-
-			// Get the player's wallet contents
-			CheckWalletExists(player);
-			var credits = wallet[player.Name.ToLower()];
-			
-            // Check if player exists (For Unit Testing)
-            var buyIcon = "[008888]";
-            var sellIcon = "[008888]";
-            var itemText = "";
-            var itemsPerPage = 25;
-			var singlePage = false;
-			if(itemsPerPage > tradeList.Count) 
-			{
-				singlePage = true;
-				itemsPerPage = tradeList.Count;
-			}
-			
-            for(var i = 0; i<itemsPerPage;i++)
-            {
-				buyIcon = "[008888]";
-				sellIcon = "[008888]";
-                var resource = tradeList[i][0];
-                var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
-                var originalSellPrice = (int)((double)originalPrice * (sellPercentage/100));
-				var stackLimit = Int32.Parse(tradeList[i][2]);
-                var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
-                var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
-				
-				if(buyPrice >= originalPrice) buyIcon = "[00FF00]";
-				if(buyPrice > originalPrice + (originalPrice * 0.1)) buyIcon = "[888800]";
-				if(buyPrice > originalPrice + (originalPrice * 0.2)) buyIcon = "[FF0000]";
-				if(sellPrice <= originalSellPrice) sellIcon = "[00FF00]";
-				if(sellPrice < originalSellPrice - (originalSellPrice * 0.1)) sellIcon = "[888800]";
-				if(sellPrice < originalSellPrice - (originalSellPrice * 0.2)) sellIcon = "[FF0000]";
-				// if(buyPrice < originalPrice + (originalPrice * 0.3)) buyIcon = "[00FF00]";
-				// if(sellPrice > originalPrice) sellIcon = "[FF0000]";
-				// if(sellPrice < originalPrice) sellIcon = "[00FF00]";
-				var buyPriceText = buyPrice.ToString();
-				var sellPriceText = sellPrice.ToString();
-				
-				
-                itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
-            }
-			
-			itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
-			
-			if(singlePage) 
-			{
-				player.ShowPopup("Grand Exchange", itemText, "Exit", (selection, dialogue, data) => DoNothing(player, selection, dialogue, data));
-				return;
-			}
-			
-            //Display the Popup with the price
-				player.ShowConfirmPopup("Grand Exchange", itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithTradeList(player, selection, dialogue, data, itemsPerPage, itemsPerPage));
-        }
 
         private void DisplayDefaultTradeList(Player player, string cmd,string[] input)
         {
@@ -1605,6 +1820,71 @@ namespace Oxide.Plugins
 		}
 		
         
+        private void ShowThePlayerTheGrandExchangeStore(Player player, string cmd)
+        {
+             // Are there any items on the store?
+            if(tradeList.Count == 0)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : The Grand Exchange is currently closed for business. Please try again later.");
+                return;
+            }
+            Log("Trade: Prices have been found!");
+
+			// Get the player's wallet contents
+			CheckWalletExists(player);
+			var credits = wallet[player.Name.ToLower()];
+			
+            // Check if player exists (For Unit Testing)
+            var buyIcon = "[008888]";
+            var sellIcon = "[008888]";
+            var itemText = "";
+            var itemsPerPage = 25;
+			var singlePage = false;
+			if(itemsPerPage > tradeList.Count) 
+			{
+				singlePage = true;
+				itemsPerPage = tradeList.Count;
+			}
+			
+            for(var i = 0; i<itemsPerPage;i++)
+            {
+				buyIcon = "[008888]";
+				sellIcon = "[008888]";
+                var resource = tradeList[i][0];
+                var originalPrice = Int32.Parse(tradeList[i][1]) / priceModifier;
+                var originalSellPrice = (int)((double)originalPrice * (sellPercentage/100));
+				var stackLimit = Int32.Parse(tradeList[i][2]);
+                var buyPrice = Int32.Parse(tradeList[i][3]) / priceModifier;
+                var sellPrice = Int32.Parse(tradeList[i][4]) / priceModifier;
+				
+				if(buyPrice >= originalPrice) buyIcon = "[00FF00]";
+				if(buyPrice > originalPrice + (originalPrice * 0.1)) buyIcon = "[888800]";
+				if(buyPrice > originalPrice + (originalPrice * 0.2)) buyIcon = "[FF0000]";
+				if(sellPrice <= originalSellPrice) sellIcon = "[00FF00]";
+				if(sellPrice < originalSellPrice - (originalSellPrice * 0.1)) sellIcon = "[888800]";
+				if(sellPrice < originalSellPrice - (originalSellPrice * 0.2)) sellIcon = "[FF0000]";
+				// if(buyPrice < originalPrice + (originalPrice * 0.3)) buyIcon = "[00FF00]";
+				// if(sellPrice > originalPrice) sellIcon = "[FF0000]";
+				// if(sellPrice < originalPrice) sellIcon = "[00FF00]";
+				var buyPriceText = buyPrice.ToString();
+				var sellPriceText = sellPrice.ToString();
+				
+				
+                itemText = itemText + "[888800]" + Capitalise(resource) + "[FFFFFF]; Buy: " + buyIcon + buyPriceText + "[FFFF00]g  [FFFFFF]Sell: " + sellIcon + sellPriceText + "[FFFF00]g\n";
+            }
+			
+			itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
+			
+			if(singlePage) 
+			{
+				player.ShowPopup("Grand Exchange", itemText, "Exit", (selection, dialogue, data) => DoNothing(player, selection, dialogue, data));
+				return;
+			}
+			
+            //Display the Popup with the price
+				player.ShowConfirmPopup("Grand Exchange", itemText, "Next Page", "Exit", (selection, dialogue, data) => ContinueWithTradeList(player, selection, dialogue, data, itemsPerPage, itemsPerPage));
+        }
+
 		private void ContinueWithTradeList(Player player, Options selection, Dialogue dialogue, object contextData,int itemsPerPage, int currentItemCount)
 		{
             if (selection != Options.Yes)

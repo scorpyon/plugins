@@ -42,6 +42,13 @@ namespace Oxide.Plugins
             GivePlayerSomeXp(player, cmd, input);
         }
 		
+		// Set a player's XP (Admin)
+        [ChatCommand("setrankxp")]
+        private void SetPlayerXp(Player player, string cmd, string[] input)
+        {
+            SetTheRankXPForAPlayer(player, cmd, input);
+        }
+		
 		
 
 #endregion
@@ -95,6 +102,42 @@ namespace Oxide.Plugins
 
 #region Private Methods
 
+        private void SetTheRankXPForAPlayer(Player player, string cmd, string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+			
+			if(input.Length < 2)
+			{
+				PrintToChat(player, "Please enter a player name and a valid amount of XP to give.");
+                return;
+			}
+			
+			var playerName = input[0];
+			var target = Server.GetPlayerByName(playerName);
+			
+			if(target == null)
+			{	
+				PrintToChat(player, "That player does not seem to be online.");
+                return;
+			}
+			
+			PrintToChat(input[1].ToString());
+			int amount;
+			if(Int32.TryParse(input[1], out amount) == false)
+			{
+				PrintToChat(player, "That was not a recognised amount!");
+                return;
+			}
+			
+			rankList[playerName.ToLower()] = amount;
+            SetPlayerRank(player);
+			PrintToChat(player, playerName + " has had their rank XP set to " + amount.ToString() + "!");
+        }
+
 		private void GivePlayerSomeXp(Player player, string cmd, string[] input)
 		{
 			if (!player.HasPermission("admin"))
@@ -127,7 +170,7 @@ namespace Oxide.Plugins
 			}
 			
 			AddRankXp(target, amount);
-			//PrintToChat(player, playerName + " has been given " + amount.ToString() + " XP!");
+			PrintToChat(player, playerName + " has been given " + amount.ToString() + " XP!");
 		}
 
 		
@@ -145,19 +188,19 @@ namespace Oxide.Plugins
         {
 			var rank = "[003333]Civilian[FFFFFF]";
 			
-			if(xp > 1000000) return "[003333]High Commander[FFFFFF]";
-			if(xp > 500000) return "[003333]Commander[FFFFFF]";
-			if(xp > 200000) return "[003333]Chancellor[FFFFFF]";
-			if(xp > 100000) return "[003333]Baron[FFFFFF]";
-			if(xp > 50000) return "[003333]Minor Baron[FFFFFF]";
-			if(xp > 20000) return "[003333]Lord[FFFFFF]";
-			if(xp > 10000) return "[003333]Minor Lord[FFFFFF]";
-			if(xp > 5000) return "[003333]Knight[FFFFFF]";
-			if(xp > 2000) return "[003333]Squire[FFFFFF]";
-			if(xp > 1000) return "[003333]Knave[FFFFFF]";
-			if(xp > 500) return "[003333]Manservant[FFFFFF]";
-			if(xp > 250) return "[003333]Servant[FFFFFF]";
-			if(xp > 100) return "[003333]Serf[FFFFFF]";
+			if(xp > 1000000) return "[FB0000]High Commander[FFFFFF]";
+			if(xp > 500000) return "[FE6542]Commander[FFFFFF]";
+			if(xp > 200000) return "[FCCE7D]Chancellor[FFFFFF]";
+			if(xp > 100000) return "[E0FC7D]Baron[FFFFFF]";
+			if(xp > 50000) return "[8FFC7D]Minor Baron[FFFFFF]";
+			if(xp > 20000) return "[A0F8E2]Lord[FFFFFF]";
+			if(xp > 10000) return "[A0D8F8]Minor Lord[FFFFFF]";
+			if(xp > 5000) return "[7688F7]Knight[FFFFFF]";
+			if(xp > 2000) return "[C8C6FA]Squire[FFFFFF]";
+			if(xp > 1000) return "[E9C46D]Knave[FFFFFF]";
+			if(xp > 500) return "[9A6BA0]Manservant[FFFFFF]";
+			if(xp > 250) return "[6C857C]Servant[FFFFFF]";
+			if(xp > 100) return "[AEB5B2]Serf[FFFFFF]";
 			
 			return rank;
         }
@@ -165,12 +208,19 @@ namespace Oxide.Plugins
 		private void AddRankXp(Player player, int amount)
 		{	
 			CheckRankExists(player);
+		    var currentRank = GetRank(rankList[player.Name.ToLower()]);
 			var currentXP = rankList[player.Name.ToLower()];
 			currentXP = currentXP + amount;
 			if(currentXP > 21000000) currentXP = 21000000;
 			rankList[player.Name.ToLower()] = currentXP;
 			
 			SetPlayerRank(player);
+            var newRank = GetRank(rankList[player.Name.ToLower()]);
+		    if (newRank != currentRank)
+		    {
+		        PrintToChat(player, "[FF0000]Rank Master[FFFFFF] : Congratulations! You have acquired a new rank!");
+		    }
+
 			SaveRankData();
 		}
 		
