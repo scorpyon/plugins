@@ -20,7 +20,7 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Rank Tracker", "Scorpyon", "1.0.1")]
+    [Info("Rank Tracker", "Scorpyon", "1.0.2")]
     public class RankTracker : ReignOfKingsPlugin
     {
 		private int xpRewardForPve = 5; // (Maximum xp - given in random increments 1-5)
@@ -31,9 +31,16 @@ namespace Oxide.Plugins
 		
 		
 #region User Commands
-
+        
+        // View my rank
+        [ChatCommand("rank")]
+        private void ShowMyRank(Player player, string cmd)
+        {
+            ShowMyPlayerRank(player, cmd);
+        }
+		
         // View the server player ranks
-        [ChatCommand("ranks")]
+        [ChatCommand("rankings")]
         private void ShowPlayerRanks(Player player, string cmd)
         {
             ShowPlayerRanksForServer(player, cmd);
@@ -126,7 +133,56 @@ namespace Oxide.Plugins
 			
 			return rank;
         }
-		
+
+        private void ShowMyPlayerRank(Player player, string cmd)
+        {
+            if (!rankList.ContainsKey(player.Name.ToLower()))
+            {
+                PrintToChat(player, "You will need to log off and back on again for your rank to come into effect.");
+                return;
+            }
+            var myXP = rankList[player.Name.ToLower()];
+            var myRank = GetRank(myXP);
+
+            //var rank = "[003333]Civilian[FFFFFF]";
+            //if(xp > 1000000) return "[FB0000]High Commander[FFFFFF]";
+            //if(xp > 500000) return "[FE6542]Commander[FFFFFF]";
+            //if(xp > 200000) return "[FCCE7D]Chancellor[FFFFFF]";
+            //if(xp > 100000) return "[E0FC7D]Baron[FFFFFF]";
+            //if(xp > 50000) return "[8FFC7D]Minor Baron[FFFFFF]";
+            //if(xp > 20000) return "[A0F8E2]Lord[FFFFFF]";
+            //if(xp > 10000) return "[A0D8F8]Minor Lord[FFFFFF]";
+            //if(xp > 5000) return "[7688F7]Knight[FFFFFF]";
+            //if(xp > 2000) return "[C8C6FA]Squire[FFFFFF]";
+            //if(xp > 1000) return "[E9C46D]Knave[FFFFFF]";
+            //if(xp > 500) return "[9A6BA0]Manservant[FFFFFF]";
+            //if(xp > 250) return "[6C857C]Servant[FFFFFF]";
+            //if(xp > 100) return "[AEB5B2]Serf[FFFFFF]";
+
+            var itemText = "\n" +
+                           "[FB0000]High Commander[FFFFFF]  - 1,000,000 XP\n" +
+                           "[FE6542]Commander[FFFFFF]  -  500,000 XP\n" +
+                           "[FCCE7D]Chancellor[FFFFFF]  -  250,000 XP\n" +
+                           "[E0FC7D]Baron[FFFFFF]  -  100,000\n" +
+                           "[8FFC7D]Minor Baron[FFFFFF]  -  50,000 XP\n" +
+                           "[A0D8F8]Minor Lord[FFFFFF]  -  20,000 XP\n" +
+                           "[A0D8F8]Minor Lord[FFFFFF]  -  10,000 XP\n" +
+                           "[7688F7]Knight[FFFFFF]  -  5,000 XP\n" +
+                           "[C8C6FA]Squire[FFFFFF]  -  2,000 XP\n" +
+                           "[E9C46D]Knave[FFFFFF]  -  1,000 XP\n" +
+                           "[9A6BA0]Manservant[FFFFFF]  -  500 XP\n" +
+                           "[6C857C]Servant[FFFFFF]  -  250 XP\n" +
+                           "[AEB5B2]Serf[FFFFFF]  -  100 XP\n" +
+                           "[003333]Civilian[FFFFFF]\n" +
+                           "\n" +
+                           "\n" +
+                           "My Current Rank  -  [00FF00]" + myRank + "\n" + 
+                           "My Current XP  -  [FFFF00]" + myXP.ToString();
+
+            player.ShowPopup("My Rank", itemText, "Exit", (selection, dialogue, data) => DoNothing(player, selection, dialogue, data));   
+        }
+
+        
         private void SetTheRankXPForAPlayer(Player player, string cmd, string[] input)
         {
             if (!player.HasPermission("admin"))
@@ -150,7 +206,6 @@ namespace Oxide.Plugins
                 return;
 			}
 			
-			PrintToChat(input[1].ToString());
 			int amount;
 			if(Int32.TryParse(input[1], out amount) == false)
 			{
@@ -160,7 +215,7 @@ namespace Oxide.Plugins
 			
 			rankList[playerName.ToLower()] = amount;
             SetPlayerRank(player);
-			PrintToChat(player, playerName + " has had their rank XP set to " + amount.ToString() + "!");
+			PrintToChat(player, playerName + " has had their rank XP set to " + GetRank(amount) + "!");
         }
 
 		private void GivePlayerSomeXp(Player player, string cmd, string[] input)
@@ -250,7 +305,8 @@ namespace Oxide.Plugins
 		{
 			CheckRankExists(player);
 			var playerRank = Capitalise(GetRank(rankList[player.Name.ToLower()]));
-			player.DisplayNameFormat = "(" + playerRank + ") %name%";
+			player.DisplayNameFormat = "[FFFFFF]([FFFFFF]" + playerRank + "[FFFFFF]) %name%";
+		    SaveRankData();
 		}
 		
 		private void ShowPlayerRanksForServer(Player player, string cmd)
@@ -260,12 +316,18 @@ namespace Oxide.Plugins
 			var itemsPerPage = 30;
 			var currentItemCount = 0;
 			
-             // Are there any items on the store?
+             // Are there any ranks yet
             if(rankList.Count == 0)
             {
                 PrintToChat(player, "[FF0000]Rank Master[FFFFFF] : No-one has acquired any ranks yet.");
                 return;
             }
+
+            // Remove Server from rank list
+		    if (rankList.ContainsKey("server"))
+		    {
+		        rankList.Remove("server");
+		    }
 
 			// Check number of players with a rank
             if(itemsPerPage > rankList.Count) 

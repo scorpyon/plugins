@@ -22,13 +22,14 @@ using CodeHatch.Engine.Events.Prefab;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.9")]
+    [Info("Trade Tracker", "Scorpyon", "1.2.0")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
 		private const double maxDeflation = 5; // This is the deflation modifier. This is the most that a price can drop below its average price to buy and above it's price to sell(Percentage)
 		private const int priceDeflationTime = 3600; // This dictates the number of seconds for each tick which brings the prices back towards their original values
-		private const int goldRewardForPvp = 10000; // This is the maximum amount of gold that can be stolen from a player for killing them.
+// (DEPRECATED)		private const int goldRewardForPvp = 10000; // This is the maximum amount of gold that can be stolen from a player for killing them.
+        private const int goldStealPercentage = 20; // Thiws is the maximum percentage of gold that can be stolen from a player
 		private const int goldRewardForPve = 100; // This is the maximum amount rewarded to a player for killing monsters, etc. (When harvesting the dead body)
 		private bool allowPvpGold = true; // Turns on/off gold for PVP
 		private bool allowPveGold = true; // Turns on/off gold for PVE
@@ -1434,8 +1435,9 @@ namespace Oxide.Plugins
 						// Check the player has a wallet
 						CheckWalletExists(killer);
 						// Give the rewards to the player
-						var goldAmount = random.Next(50,goldRewardForPvp);
 						var victimGold = wallet[player.Name.ToLower()];
+					    var goldReward = (int)(victimGold * (double)(goldStealPercentage / 100));
+						var goldAmount = random.Next(0,goldReward);
 						if(goldAmount > victimGold) goldAmount = victimGold;
 						GiveGold(killer,goldAmount);
 						RemoveGold(player,goldAmount);
