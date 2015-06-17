@@ -22,7 +22,7 @@ using CodeHatch.Engine.Events.Prefab;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.8")]
+    [Info("Trade Tracker", "Scorpyon", "1.1.9")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
@@ -407,12 +407,19 @@ namespace Oxide.Plugins
                 PrintToChat(player, "[00FF00]" + tradeMaster);
             }
         }
-
+        
         // Add a new trademaster
         [ChatCommand("addtrademaster")]
         private void AddTradeMasterToList(Player player, string cmd,string[] input)
         {
             AddPlayerAsATradeMaster(player, cmd, input);
+        }
+        
+        // Add a new trademaster
+        [ChatCommand("removetrademaster")]
+        private void RemoveTradeMasterToList(Player player, string cmd,string[] input)
+        {
+            RemovePlayerAsATradeMaster(player, cmd, input);
         }
         
 		// Buying an item from the exchange
@@ -829,7 +836,7 @@ namespace Oxide.Plugins
 			//Save the data
 			SaveTradeData();
         }
-
+        
         private void AddPlayerAsATradeMaster(Player player,string cmd,string[] input )
         {
             if (!player.HasPermission("admin"))
@@ -861,6 +868,39 @@ namespace Oxide.Plugins
             tradeMasters.Add(playerName.ToLower());
             PrintToChat(player, "You have added " + playerName + " as a Trade Master.");
 
+            SaveTradeData();
+        }
+
+        private void RemovePlayerAsATradeMaster(Player player,string cmd,string[] input )
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+
+            var playerName = input.JoinToString(" ");
+            // Check player exists
+            
+            //Check if player is already on the list
+            var position = -1;
+            for(var i=0; i<tradeMasters.Count;i++)
+            {
+                if (tradeMasters[i] == playerName.ToLower())
+                {
+                    position = i;
+                    break;
+                }
+            }
+
+            if (position < 0)
+            {
+                PrintToChat(player, playerName + " does not appear to be on the list!");
+                return;
+            }
+
+            tradeMasters.RemoveAt(position);
+            PrintToChat(player, playerName + " has had their Grand Exchange priveleges revoked!");
             SaveTradeData();
         }
 
