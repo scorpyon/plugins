@@ -22,7 +22,7 @@ using CodeHatch.Engine.Events.Prefab;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.1.7")]
+    [Info("Trade Tracker", "Scorpyon", "1.1.8")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
@@ -282,6 +282,7 @@ namespace Oxide.Plugins
         // 1 - Price
         // 2 - Amount
 
+        private Collection<string> tradeMasters = new Collection<string>();
 
 #endregion
 
@@ -296,6 +297,7 @@ namespace Oxide.Plugins
             markList = Interface.GetMod().DataFileSystem.ReadObject<Collection<double[]>>("SavedMarkList");
             sellPercentage = Interface.GetMod().DataFileSystem.ReadObject<double>("SavedSellPercentage");
             playerShop = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string,Collection<string[]>>>("SavedPlayerShop");
+            tradeMasters = Interface.GetMod().DataFileSystem.ReadObject<Collection<string>>("SavedTradeMasters");
         }
 
         private void SaveTradeData()
@@ -306,6 +308,7 @@ namespace Oxide.Plugins
             Interface.GetMod().DataFileSystem.WriteObject("SavedMarkList", markList);
             Interface.GetMod().DataFileSystem.WriteObject("SavedSellPercentage", sellPercentage);
             Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShop", playerShop);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedTradeMasters", tradeMasters);
         }
 		
 		private void OnPlayerConnected(Player player)
@@ -393,7 +396,25 @@ namespace Oxide.Plugins
             AddStockToThePlayerShop(player, cmd, input);
         }
 
+        
+        // Add a new trademaster
+        [ChatCommand("viewtrademasters")]
+        private void SeeAllTheTradeMasters(Player player, string cmd)
+        {
+            PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : The current Trade Masters are : ");
+            foreach (var tradeMaster in tradeMasters)
+            {
+                PrintToChat(player, "[00FF00]" + tradeMaster);
+            }
+        }
 
+        // Add a new trademaster
+        [ChatCommand("addtrademaster")]
+        private void AddTradeMasterToList(Player player, string cmd,string[] input)
+        {
+            AddPlayerAsATradeMaster(player, cmd, input);
+        }
+        
 		// Buying an item from the exchange
         [ChatCommand("listtradedefaults")]
         private void ListTheDefaultTrades(Player player, string cmd,string[] input)
@@ -809,6 +830,49 @@ namespace Oxide.Plugins
 			SaveTradeData();
         }
 
+        private void AddPlayerAsATradeMaster(Player player,string cmd,string[] input )
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can use this command.");
+                return;
+            }
+
+            var playerName = input.JoinToString(" ");
+            // Check player exists
+            var target = Server.GetPlayerByName(playerName);
+            if (target == null)
+            {
+                PrintToChat(player, "That player does not appear to be online right now.");
+                return;
+            }
+
+            //Check if player is already on the list
+            foreach (var tradeMaster in tradeMasters)
+            {
+                if (tradeMaster.ToLower() == playerName.ToLower())
+                {
+                    PrintToChat(player, "That player is already a trade master.");
+                    return;
+                }
+            }
+
+            // Add the player to the list
+            tradeMasters.Add(playerName.ToLower());
+            PrintToChat(player, "You have added " + playerName + " as a Trade Master.");
+
+            SaveTradeData();
+        }
+
+        private bool PlayerIsATradeMaster(string playerName)
+        {
+            foreach (var tradeMaster in tradeMasters)
+            {
+                if (tradeMaster.ToLower() == playerName.ToLower()) return true;
+            }
+            return false;
+        }
+
         private void CheckHowMuchGoldICurrentlyHave(Player player, string cmd)
         {
             CheckWalletExists(player);
@@ -818,7 +882,7 @@ namespace Oxide.Plugins
 
         private void SetTheNewSellPercentageAmount(Player player, string cmd, string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -841,7 +905,7 @@ namespace Oxide.Plugins
 
         private void AdminSetAPlayersGoldAmount(Player player, string cmd, string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -869,7 +933,7 @@ namespace Oxide.Plugins
 
         private void RemoveTheGoldFromAllPlayers(Player player, string cmd)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -884,7 +948,7 @@ namespace Oxide.Plugins
 
         private void GetThePlayersCurrentLocation(Player player, string cmd, string[] args)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "For now, only admins can check locations.");
                 return;
@@ -895,7 +959,7 @@ namespace Oxide.Plugins
         private void AddTheTradeAreaMark(Player player, string cmd, string[] input)
         {
             var newLocSet = new double[4];
-			if (!player.HasPermission("admin"))
+			if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "For now, only admins can alter locations.");
                 return;
@@ -922,7 +986,7 @@ namespace Oxide.Plugins
 
         private void RemoveAllMarksForTradeArea(Player player, string cmd, string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "For now, only admins can alter locations.");
                 return;
@@ -935,7 +999,7 @@ namespace Oxide.Plugins
 
         private void ToggleTheSafeTradingArea(Player player, string cmd)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -956,7 +1020,7 @@ namespace Oxide.Plugins
 
         private void GiveGoldToAPlayer(Player player, string cmd,string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
                 return;
@@ -996,7 +1060,7 @@ namespace Oxide.Plugins
 
         private void CheckTheGoldAPlayerHas(Player player, string cmd,string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -1018,7 +1082,7 @@ namespace Oxide.Plugins
 
         private void RemoveAnItemFromTheExchange(Player player, string cmd,string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -1048,7 +1112,7 @@ namespace Oxide.Plugins
 
         private void RemoveAllExchangeItems(Player player, string cmd,string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -1064,7 +1128,7 @@ namespace Oxide.Plugins
 
         private void TogglePvpGoldStealing(Player player, string cmd)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -1082,7 +1146,7 @@ namespace Oxide.Plugins
 
         private void TogglePveGoldFarming(Player player, string cmd)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -1100,7 +1164,7 @@ namespace Oxide.Plugins
 
         private void RestoreTheDefaultExchangePrices(Player player, string cmd)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -1122,7 +1186,7 @@ namespace Oxide.Plugins
 
         private void AddANewItemToTheExchange(Player player, string cmd,string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "Only admins can use this command.");
                 return;
@@ -1200,7 +1264,7 @@ namespace Oxide.Plugins
 
         private void DisplayDefaultTradeList(Player player, string cmd,string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
             {
                 PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
                 return;
@@ -1213,7 +1277,7 @@ namespace Oxide.Plugins
 
         private void SetThePriceOfAnItem(Player player, string cmd,string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
                 {
                     PrintToChat(player, "This is not for you. Don't even try it, thieving scumbag!");
                     return;
@@ -1248,7 +1312,9 @@ namespace Oxide.Plugins
 			    }
 			
 			    PrintToChat(player, "Changing price of " + resource + " to " + priceText);
-			
+
+                ForcePriceAdjustment();
+
 			    // Save the trade data
                 SaveTradeData();
         }
