@@ -20,7 +20,7 @@ using CodeHatch.UserInterface.Dialogues;
 
 namespace Oxide.Plugins
 {
-    [Info("Rank Tracker", "Scorpyon", "1.0.2")]
+    [Info("Rank Tracker", "Scorpyon", "1.0.3")]
     public class RankTracker : ReignOfKingsPlugin
     {
 		private int xpRewardForPve = 5; // (Maximum xp - given in random increments 1-5)
@@ -335,11 +335,31 @@ namespace Oxide.Plugins
 				singlePage = true;
 				itemsPerPage = rankList.Count;
 			}
-			
+
+		    var finalRankList = new Collection<string[]>();
+		    var isInserted = false;
+		    foreach (var item in rankList)
+		    {
+		        for (var itemCount = 0; itemCount < finalRankList.Count; itemCount++)
+		        {
+		            var xp = item.Value;
+		            if (xp > Int32.Parse(finalRankList[itemCount][1]))
+		            {
+		                finalRankList.Insert(itemCount, new string[2] {item.Key, item.Value.ToString()});
+		                isInserted = true;
+		            }
+		        }
+		        if (!isInserted)
+		        {
+		            finalRankList.Add(new string[2] { item.Key, item.Value.ToString()});
+		        }
+		        isInserted = false;
+		    }
+
 			var i=0;
-			foreach(var person in rankList)
+			foreach(var person in finalRankList)
             {
-				var message = "[FFFFFF]" + Capitalise(person.Key) + " - (" + Capitalise(GetRank(person.Value)) + ")\n";
+				var message = "[FFFFFF]" + Capitalise(person[0]) + " - (" + Capitalise(GetRank(Int32.Parse(person[1]))) + ")\n";
                 itemText = itemText + message;
 				i++;
 				if(i >= itemsPerPage + currentItemCount) break;
