@@ -250,7 +250,7 @@ namespace Oxide.Plugins
 			}
 			
 			AddRankXp(target, amount);
-			PrintToChat(player, playerName + " has been given " + amount.ToString() + " XP!");
+			PrintToChat(player, playerName + " has been promoted to " + GetRank(amount) + "!");
 		}
 
 		
@@ -337,24 +337,26 @@ namespace Oxide.Plugins
 			}
 
 		    var finalRankList = new Collection<string[]>();
-		    var isInserted = false;
-		    foreach (var item in rankList)
-		    {
-		        for (var itemCount = 0; itemCount < finalRankList.Count; itemCount++)
-		        {
-		            var xp = item.Value;
-		            if (xp > Int32.Parse(finalRankList[itemCount][1]))
-		            {
-		                finalRankList.Insert(itemCount, new string[2] {item.Key, item.Value.ToString()});
-		                isInserted = true;
-		            }
-		        }
-		        if (!isInserted)
-		        {
-		            finalRankList.Add(new string[2] { item.Key, item.Value.ToString()});
-		        }
-		        isInserted = false;
-		    }
+            var isInserted = false;
+            foreach (var item in rankList)
+            {
+                var finalRankListCount = finalRankList.Count;
+                for (var itemCount = 0; itemCount < finalRankListCount; itemCount++)
+                {
+                    var xp = item.Value;
+                    if (xp > Int32.Parse(finalRankList[itemCount][1]))
+                    {
+                        finalRankList.Insert(itemCount, new string[2] {item.Key, item.Value.ToString()});
+                        isInserted = true;
+                        break;
+                    }
+                }
+                if (!isInserted)
+                {
+                    finalRankList.Add(new string[2] { item.Key, item.Value.ToString()});
+                }
+                isInserted = false;
+            }
 
 			var i=0;
 			foreach(var person in finalRankList)

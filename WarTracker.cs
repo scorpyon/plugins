@@ -18,7 +18,7 @@ using CodeHatch.ItemContainer;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.1.1")]
+    [Info("WarTracker", "Scorpyon", "1.1.2")]
     public class WarTracker : ReignOfKingsPlugin
     {
         //
@@ -219,6 +219,7 @@ namespace Oxide.Plugins
 				var player = cubeDamageEvent.Damage.DamageSource.Owner;
 				var isAtWar = false;
 				
+                // CHeck if the guilds are at war
 				foreach(var war in WarList)
 				{
 					if(war[1].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower() || war[2].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower())
@@ -229,12 +230,19 @@ namespace Oxide.Plugins
 				
 				if (!isAtWar)
                 {
-					var oldInventory = player.GetInventory().Contents;
-					//cubeDamageEvent.Cancel("Can Only Attack Bases When At War");
-                    //cubeDamageEvent.Damage.Amount = 0f;
-					var message = "[FF0000]War General : [00FF00]" + player.DisplayName + "[FFFFFF]! You cannot attack a base when you are not at war with a guild!";
-                    PrintToChat(message);
-					Log(message);
+                    // IF its a player attacking the base
+                    if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
+                    {
+                        bool trebuchet = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Trebuchet");
+                        bool ballista = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Ballista");
+                        if (trebuchet || ballista)
+                        {
+                            cubeDamageEvent.Damage.Amount = 0f;
+                            var message = "[FF0000]War General : [00FF00]" + player.DisplayName + "[FFFFFF]! You cannot attack this base when you are not at war with this guild!";
+                            PrintToChat(message);
+                            Log(message);
+                        }
+                    }
                 }
             }
         }

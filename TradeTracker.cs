@@ -19,10 +19,11 @@ using CodeHatch.UserInterface.Dialogues;
 //using CodeHatch.Inventory.Blueprints.Components;
 using CodeHatch.Networking.Events.Entities.Objects.Gadgets;
 using CodeHatch.Engine.Events.Prefab;
+using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.2.0")]
+    [Info("Trade Tracker", "Scorpyon", "1.2.2")]
     public class TradeTracker : ReignOfKingsPlugin
     {
 		private const double inflation = 1; // This is the inflation modifier. More means bigger jumps in price changes (Currently raises at approx 1%
@@ -1499,6 +1500,30 @@ namespace Oxide.Plugins
 				}
 			}
 		}
+
+        
+        private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
+        {
+            var player = cubeDamageEvent.Damage.DamageSource.Owner;
+
+            // If in the GE Area
+            if (PlayerIsInTheRightTradeArea(player))
+            {
+                // IF its a player attacking the base
+                if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
+                {
+                    bool trebuchet = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Trebuchet");
+                    bool ballista = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Ballista");
+                    if (trebuchet || ballista)
+                    {
+                        cubeDamageEvent.Damage.Amount = 0f;
+                    }
+                    var message = "[FF0000]Grand Exchange : [00FF00]" + player.DisplayName + "[FFFFFF]! Attacking the Grand Exchange is ill-advised! Decist immediately!";
+                    PrintToChat(message);
+                    Log(message);
+                }
+            }
+        }
 		
 		private void ForcePriceAdjustment()
 		{
