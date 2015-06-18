@@ -684,6 +684,12 @@ namespace Oxide.Plugins
         private void BuyItemFromPlayerShop(Player player, string shopOwnerName, Collection<string[]> myShop,
             Options selection, Dialogue dialogue, object contextData, int itemsPerPage, int currentItemCount)
         {
+            if (selection != Options.Yes)
+            {
+                //Leave
+                return;
+            }
+
             //Open up the buy screen
 			player.ShowInputPopup(shopOwnerName + "'s Store", "What [00FF00]item [FFFFFF]would you like to buy at this store?", "", "Submit", "Cancel", (options, dialogue1, data) => SelectItemToBeBoughtFromPlayer(player, shopOwnerName, options, dialogue1, data));
         }
