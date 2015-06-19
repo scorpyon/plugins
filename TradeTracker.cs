@@ -14,7 +14,7 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.2.5")]
+    [Info("Trade Tracker", "Scorpyon", "1.2.7")]
     public class TradeTracker : ReignOfKingsPlugin
     {
         #region MODIFIABLE VARIABLES (For server admin)
@@ -2401,7 +2401,7 @@ namespace Oxide.Plugins
 
         #endregion
 
-        #region SAFE RADING
+        #region SAFE TRADING
 
         private void ToggleTheSafeTradingArea(Player player, string cmd)
         {
@@ -2495,7 +2495,10 @@ namespace Oxide.Plugins
 				{
 					var victim = damageEvent.Entity;
 					Health h = victim.TryGet<Health>();
-					if(h.ToString().Contains("Plague Villager")) return;
+                    if (h.ToString().Contains("Plague Villager")) return;
+                    if (h.ToString().Contains("Trebuchet")) return;
+                    if (h.ToString().Contains("Ballista")) return;
+
 					if (!h.IsDead) return;
 					
 					var hunter = damageEvent.Damage.DamageSource.Owner;
@@ -2544,7 +2547,7 @@ namespace Oxide.Plugins
                         cubeDamageEvent.Damage.Amount = 0f;
                     }
                     var message = "[FF0000]Grand Exchange : [00FF00]" + player.DisplayName + "[FFFFFF]! Attacking the Grand Exchange is ill-advised! Decist immediately!";
-                    PrintToChat(message);
+                    //PrintToChat(message);
                     //Log(message);
                 }
             }
