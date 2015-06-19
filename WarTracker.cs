@@ -1,27 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections;
 using System.Collections.ObjectModel;
-using System.Timers;
 using CodeHatch.Engine.Networking;
-using CodeHatch.Engine.Core.Networking;
-using CodeHatch.Thrones.SocialSystem;
 using CodeHatch.Common;
-using CodeHatch.Permissions;
 using Oxide.Core;
 using CodeHatch.Networking.Events.Entities;
-using CodeHatch.Networking.Events.Entities.Players;
-using CodeHatch.Networking.Events.Players;
-using CodeHatch.Engine.Core.Cache;
 using CodeHatch.Blocks.Networking.Events;
-using CodeHatch.ItemContainer;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.1.2")]
+    [Info("WarTracker", "Scorpyon", "1.1.3")]
     public class WarTracker : ReignOfKingsPlugin
     {
-        //
+#region MODIFIABLE VARIABLES
+
         // MODIFY THIS VALUE TO THE NUMBER OF 'SECONDS' THAT WARS WILL LAST FOR
         private const int WarTimeLength = 5400; // Currently 1.5 hrs
         // MODIFY THIS VALUE TO THE NUMBER OF 'SECONDS' THAT YOU WANT BETWEEN WAR UPDATE REPORTS TO PLAYERS 
@@ -32,24 +23,25 @@ namespace Oxide.Plugins
         private const int WarPrepTimeMinutes = 10;      // These are for text purposes to save time on calculations later
         private const int WarPrepTimeSeconds = 0;       //
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT PLAYERS TO BE KILLED WHEN AT WAR (Prevents KoS)
-        private bool noPeaceKilling = true;
+        private bool _noPeaceKilling = true;
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT CRESTS TO BE DAMAGED WHEN AT WAR (Prevents Base Stealing)
-        private bool noCrestKilling = true;
+        private bool _noCrestKilling = true;
         // MODIFY THIS VALUE TO TRUE IF YOU ONLY WANT BUILDINGS TO BE DAMAGED WHEN AT WAR (Prevents Base Destruction)
-        private bool noBaseKilling = true; //(Currently Not Working - disregard for now...)
+        private bool _noBaseKilling = true; //(Currently Not Working - disregard for now...)
 
-
-
+#endregion
 
 
         // DO NOT EDIT ANYTHING BELOW THIS LINE UNLESS YOU WANT TO EXPERIMENT / KNOW WHAT YOU'RE DOING.
         // ==================================================================================================
 
+#region SERVER VARIABLES (DO NOT MODIFY)
+
         private Collection<Collection<string>> WarList = new Collection<Collection<string>>();
         // WarList[0] = the war ID
         // WarList[1] = the instigating Guild name
         // WarList[2] = the enemy guild name
-        private const int WarTimerInterval = 5;
+        private const int WarTimerInterval = 1;
         void Log(string msg) => Puts($"{Title} : {msg}");
 
         // SAVE DATA ===============================================================================================
@@ -57,263 +49,30 @@ namespace Oxide.Plugins
 		private void LoadWarData()
 		{
             WarList = Interface.GetMod().DataFileSystem.ReadObject<Collection<Collection<string>>>("SavedWarList");
-            noPeaceKilling = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedWarListNoPeace");
-            noCrestKilling = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedWarListNoCrest");
+            _noPeaceKilling = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedWarListNoPeace");
+            _noCrestKilling = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedWarListNoCrest");
         }
 
         private void SaveWarListData()
         {
             Interface.GetMod().DataFileSystem.WriteObject("SavedWarList", WarList);
-            Interface.GetMod().DataFileSystem.WriteObject("SavedWarListNoPeace", noPeaceKilling);
-            Interface.GetMod().DataFileSystem.WriteObject("SavedWarListNoCrest", noCrestKilling);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedWarListNoPeace", _noPeaceKilling);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedWarListNoCrest", _noCrestKilling);
         }
         
         void Loaded()
         {            
             // Load the WarTimer Updater
             timer.Repeat(WarReportInterval, 0, WarReport);
-            timer.Repeat(1, 0, WarUpdate);
+            timer.Repeat(WarTimerInterval, 0, WarUpdate);
 
             LoadWarData();
 		}
 
+#endregion
 
-        // ===========================================================================================================
-
-        private bool GuildsAreAtWar(EntityDamageEvent damageEvent)
-        {
-            var player = damageEvent.Damage.DamageSource.Owner;
-            var target = damageEvent.Entity.Owner;
-            var playerGuild = PlayerExtensions.GetGuild(player).Name.ToLower();
-            var targetGuild = PlayerExtensions.GetGuild(target).Name.ToLower();
-
-            foreach (var war in WarList)
-            {
-                if (war[2] == playerGuild && war[1] == targetGuild) return true;
-                if (war[1] == playerGuild && war[2] == targetGuild) return true;
-            }
-
-            return false;
-        }
-
-        // LIST WAR COMMANDS
-        [ChatCommand("warcommands")]
-        private void ListAllAllianceCommands(Player player, string cmd)
-        {
-            PrintToChat(player, "[FF0000]War Organiser[FFFFFF] : Use the following commands for Wars :");
-            PrintToChat(player, "[00FF00]/declarewar [FF00FF]<player_name> [FFFFFF] - Declare war on players guild");
-            PrintToChat(player, "[00FF00]/warreport [FFFFFF] - View all active wars");
-            if (player.HasPermission("admin"))
-            {
-                PrintToChat(player, "[00FF00]/endwar [FF00FF]<player_name> [FFFFFF] - End current war on players guild");
-                PrintToChat(player, "[00FF00]/endallwars [FFFFFF] - End current war on players guild");
-                PrintToChat(player, "[00FF00]/warnokos [FFFFFF] - Toggle player protection for when not in a war");
-                PrintToChat(player, "[00FF00]/warnocrest [FFFFFF] - Toggle crest protection for when not in a war");
-                PrintToChat(player, "[00FF00]/warnobase [FFFFFF] - Toggle base protection for when not in a war");
-            }
-        }
-
-        // Toggle KoS Rules
-        [ChatCommand("warnokos")]
-        private void ToggleNoKoS(Player player, string cmd)
-        {
-            if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only an admin may use this command!");
-                return;
-            }
-            if (noPeaceKilling)
-            {
-                noPeaceKilling = false;
-                SaveWarListData();
-                PrintToChat(player, "Players can now kill on sight!");
-                return;
-            }
-            noPeaceKilling = true;
-            SaveWarListData();
-            PrintToChat(player, "Players can no longer kill unless at war!");
-        }
-
-        // Toggle Crest breaking rules
-        [ChatCommand("warnocrest")]
-        private void ToggleNoCrestKill(Player player, string cmd)
-        {
-            if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only an admin may use this command!");
-                return;
-            }
-            if (noCrestKilling)
-            {
-                noCrestKilling = false;
-                SaveWarListData();
-                PrintToChat(player, "Players can now break crests at any time!");
-                return;
-            }
-            noCrestKilling = true;
-            SaveWarListData();
-            PrintToChat(player, "Players can no longer break crests unless at war!");
-        }
-
-        // Toggle Base Rules
-        [ChatCommand("warnobase")]
-        private void ToggleNoBase(Player player, string cmd)
-        {
-            if (!player.HasPermission("admin"))
-            {
-                PrintToChat(player, "Only an admin may use this command!");
-                return;
-            }
-            if (noBaseKilling)
-            {
-                noBaseKilling = false;
-                SaveWarListData();
-                PrintToChat(player, "Players can now attack other players' bases at will!");
-                return;
-            }
-            noBaseKilling = true;
-            SaveWarListData();
-            PrintToChat(player, "Players can no longer attack bases unless at war!");
-        }
-
-        // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
-        private void OnEntityHealthChange(EntityDamageEvent damageEvent)
-        {
-            if (damageEvent.Damage.Amount < 0) return;
-            if (noPeaceKilling)
-            {
-                if (
-                    damageEvent.Damage.Amount > 0 // taking damage
-                    && damageEvent.Entity.IsPlayer // entity taking damage is player
-                    && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
-                    && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
-                    && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
-                    )
-                {
-                    damageEvent.Cancel("Can Only Kill When At War");
-                    damageEvent.Damage.Amount = 0f;
-                    PrintToChat(damageEvent.Damage.DamageSource.Owner,
-                        "[FF0000]War General : [FFFFFF]You cannot attack another person when you are not at war with them!");
-                }
-            }
-            if (noCrestKilling)
-            {
-                // Make sure it's not a player with a clever name! 
-                if (!damageEvent.Entity.IsPlayer)
-                {
-                    if (damageEvent.Entity.name.Contains("Crest"))
-                    {
-                        damageEvent.Cancel("Can Only Break Crests When At War");
-                        damageEvent.Damage.Amount = 0f;
-                        PrintToChat(damageEvent.Damage.DamageSource.Owner,
-                            "[FF0000]War General : [FFFFFF]You cannot break another guild's crest when you are not at war with them!");
-                    }
-                }
-            }
-        }
-
-        private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
-        {
-            if (noBaseKilling)
-            {
-				var player = cubeDamageEvent.Damage.DamageSource.Owner;
-				var isAtWar = false;
-				
-                // CHeck if the guilds are at war
-				foreach(var war in WarList)
-				{
-					if(war[1].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower() || war[2].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower())
-					{
-						isAtWar = true;
-					}
-				}
-				
-				if (!isAtWar)
-                {
-                    // IF its a player attacking the base
-                    if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
-                    {
-                        bool trebuchet = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Trebuchet");
-                        bool ballista = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Ballista");
-                        if (trebuchet || ballista)
-                        {
-                            cubeDamageEvent.Damage.Amount = 0f;
-                            var message = "[FF0000]War General : [00FF00]" + player.DisplayName + "[FFFFFF]! You cannot attack this base when you are not at war with this guild!";
-                            PrintToChat(message);
-                            Log(message);
-                        }
-                    }
-                }
-            }
-        }
-		
-        private void WarReport()
-        {
-            var hours = "";
-            var minutes = "";
-            var seconds = "";
-
-            if(WarList.Count >= 1)
-            {
-                // Check each War in the List
-                PrintToChat("[0000FF]WAR REPORT");
-                for (var i = 0; i < WarList.Count; i++)
-                {
-                    var timeLeft = Int32.Parse(WarList[i][3]);
-                    hours = (timeLeft / 60 / 60).ToString();
-                    minutes = ((timeLeft - (Int32.Parse(hours) * 60 * 60))/60).ToString();
-                    var intSeconds = timeLeft - (Int32.Parse(hours) * 60 * 60) - (Int32.Parse(minutes) * 60);
-                    seconds = intSeconds.ToString();
-
-                    if(timeLeft > WarTimeLength)
-                    {
-                        var prepTimeLeft = timeLeft  - WarTimeLength;
-                        var prepHours = (prepTimeLeft / 60 / 60).ToString();
-                        var prepMinutes = ((prepTimeLeft - (Int32.Parse(prepHours) * 60 * 60))/60).ToString();
-                        var intPrepSeconds = prepTimeLeft - (Int32.Parse(prepHours) * 60 * 60) - (Int32.Parse(prepMinutes) * 60);
-                        var prepSeconds = intPrepSeconds.ToString();
-
-                        PrintToChat("[FF0000]War Report : [00FF00]" + Capitalise(WarList[i][1]) + "[FFFFFF] is preparing for war with [00FF00]" + Capitalise(WarList[i][2]));
-                        PrintToChat("[FFFFFF]There are [00FF00]" + prepHours + "[FFFFFF]hrs, [00FF00]" + prepMinutes + "[FFFFFF]mins, [00FF00]" + prepSeconds + "[FFFFFF]secs until this war begins!");
-                    }
-                    else
-                    {
-                        PrintToChat("[FF0000]War Report : [00FF00]" + Capitalise(WarList[i][1]) + "[FFFFFF] is at war with [00FF00]" + Capitalise(WarList[i][2]));
-                        PrintToChat("[00FF00]" + hours + "[FFFFFF]hrs, [00FF00]" + minutes + "[FFFFFF]mins, [00FF00]" + seconds + "[FFFFFF]secs remaining.");
-                    }
-                }
-            }
-
-            // Save the data
-            SaveWarListData();
-        }
-
-        private void WarUpdate()
-        {
-            // Check each War in the List
-            foreach(var war in WarList)
-            {
-                // Countdown the time for this war
-                var timeLeft = Int32.Parse(war[3]);
-
-                if(timeLeft == WarTimeLength)
-                {
-                    PrintToChat("[FF0000]WAR BETWEEN [00FF00]" + Capitalise(war[1]) + "[FF0000] AND " + Capitalise(war[2]) + "[FF0000] HAS BEGUN!");
-                }
-
-                timeLeft = timeLeft - 1;
-
-                //Store this value in the War Record
-                war[3] = timeLeft.ToString();
-
-                // If war has ended, let everyone know and end the war
-                if(timeLeft <= 0)
-                {
-                    PrintToChat("[FF0000] War Report [FFFFFF]([00FF00]WAR OVER![FFFFFF]) : The war between [00FF00]" + Capitalise(war[1]) + " [FFFFFF] and [00FF00]" + Capitalise(war[2]) + "[FFFFFF] has now ended!");
-                    EndWar(war[0]);
-                }
-            }
-        }
+#region PLAYER COMMANDS 
+        
         
         // Get current War Report
         [ChatCommand("warreport")]
@@ -455,6 +214,91 @@ namespace Oxide.Plugins
             SaveWarListData();
         }
 
+        // LIST WAR COMMANDS
+        [ChatCommand("warcommands")]
+        private void ListAllAllianceCommands(Player player, string cmd)
+        {
+            PrintToChat(player, "[FF0000]War Organiser[FFFFFF] : Use the following commands for Wars :");
+            PrintToChat(player, "[00FF00]/declarewar [FF00FF]<player_name> [FFFFFF] - Declare war on players guild");
+            PrintToChat(player, "[00FF00]/warreport [FFFFFF] - View all active wars");
+            if (player.HasPermission("admin"))
+            {
+                PrintToChat(player, "[00FF00]/endwar [FF00FF]<player_name> [FFFFFF] - End current war on players guild");
+                PrintToChat(player, "[00FF00]/endallwars [FFFFFF] - End current war on players guild");
+                PrintToChat(player, "[00FF00]/warnokos [FFFFFF] - Toggle player protection for when not in a war");
+                PrintToChat(player, "[00FF00]/warnocrest [FFFFFF] - Toggle crest protection for when not in a war");
+                PrintToChat(player, "[00FF00]/warnobase [FFFFFF] - Toggle base protection for when not in a war");
+            }
+        }
+
+        // Toggle KoS Rules
+        [ChatCommand("warnokos")]
+        private void ToggleNoKoS(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only an admin may use this command!");
+                return;
+            }
+            if (_noPeaceKilling)
+            {
+                _noPeaceKilling = false;
+                SaveWarListData();
+                PrintToChat(player, "Players can now kill on sight!");
+                return;
+            }
+            _noPeaceKilling = true;
+            SaveWarListData();
+            PrintToChat(player, "Players can no longer kill unless at war!");
+        }
+
+        // Toggle Crest breaking rules
+        [ChatCommand("warnocrest")]
+        private void ToggleNoCrestKill(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only an admin may use this command!");
+                return;
+            }
+            if (_noCrestKilling)
+            {
+                _noCrestKilling = false;
+                SaveWarListData();
+                PrintToChat(player, "Players can now break crests at any time!");
+                return;
+            }
+            _noCrestKilling = true;
+            SaveWarListData();
+            PrintToChat(player, "Players can no longer break crests unless at war!");
+        }
+
+        // Toggle Base Rules
+        [ChatCommand("warnobase")]
+        private void ToggleNoBase(Player player, string cmd)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only an admin may use this command!");
+                return;
+            }
+            if (_noBaseKilling)
+            {
+                _noBaseKilling = false;
+                SaveWarListData();
+                PrintToChat(player, "Players can now attack other players' bases at will!");
+                return;
+            }
+            _noBaseKilling = true;
+            SaveWarListData();
+            PrintToChat(player, "Players can no longer attack bases unless at war!");
+        }
+
+#endregion
+
+#region WAR SCRIPTS
+
+        
         private void CommenceWar(string warID, string myGuild, string targetGuild)
         {
             // Add the War Details 
@@ -481,7 +325,170 @@ namespace Oxide.Plugins
             }
         }
 		
+        private bool GuildsAreAtWar(EntityDamageEvent damageEvent)
+        {
+            var player = damageEvent.Damage.DamageSource.Owner;
+            var target = damageEvent.Entity.Owner;
+            var playerGuild = PlayerExtensions.GetGuild(player).Name.ToLower();
+            var targetGuild = PlayerExtensions.GetGuild(target).Name.ToLower();
+
+            foreach (var war in WarList)
+            {
+                if (war[2] == playerGuild && war[1] == targetGuild) return true;
+                if (war[1] == playerGuild && war[2] == targetGuild) return true;
+            }
+
+            return false;
+        }
+
+        
+        private void WarReport()
+        {
+            var hours = "";
+            var minutes = "";
+            var seconds = "";
+
+            if(WarList.Count >= 1)
+            {
+                // Check each War in the List
+                PrintToChat("[0000FF]WAR REPORT");
+                for (var i = 0; i < WarList.Count; i++)
+                {
+                    var timeLeft = Int32.Parse(WarList[i][3]);
+                    hours = (timeLeft / 60 / 60).ToString();
+                    minutes = ((timeLeft - (Int32.Parse(hours) * 60 * 60))/60).ToString();
+                    var intSeconds = timeLeft - (Int32.Parse(hours) * 60 * 60) - (Int32.Parse(minutes) * 60);
+                    seconds = intSeconds.ToString();
+
+                    if(timeLeft > WarTimeLength)
+                    {
+                        var prepTimeLeft = timeLeft  - WarTimeLength;
+                        var prepHours = (prepTimeLeft / 60 / 60).ToString();
+                        var prepMinutes = ((prepTimeLeft - (Int32.Parse(prepHours) * 60 * 60))/60).ToString();
+                        var intPrepSeconds = prepTimeLeft - (Int32.Parse(prepHours) * 60 * 60) - (Int32.Parse(prepMinutes) * 60);
+                        var prepSeconds = intPrepSeconds.ToString();
+
+                        PrintToChat("[FF0000]War Report : [00FF00]" + Capitalise(WarList[i][1]) + "[FFFFFF] is preparing for war with [00FF00]" + Capitalise(WarList[i][2]));
+                        PrintToChat("[FFFFFF]There are [00FF00]" + prepHours + "[FFFFFF]hrs, [00FF00]" + prepMinutes + "[FFFFFF]mins, [00FF00]" + prepSeconds + "[FFFFFF]secs until this war begins!");
+                    }
+                    else
+                    {
+                        PrintToChat("[FF0000]War Report : [00FF00]" + Capitalise(WarList[i][1]) + "[FFFFFF] is at war with [00FF00]" + Capitalise(WarList[i][2]));
+                        PrintToChat("[00FF00]" + hours + "[FFFFFF]hrs, [00FF00]" + minutes + "[FFFFFF]mins, [00FF00]" + seconds + "[FFFFFF]secs remaining.");
+                    }
+                }
+            }
+
+            // Save the data
+            SaveWarListData();
+        }
+
+        private void WarUpdate()
+        {
+            // Check each War in the List
+            foreach(var war in WarList)
+            {
+                // Countdown the time for this war
+                var timeLeft = Int32.Parse(war[3]);
+
+                if(timeLeft == WarTimeLength)
+                {
+                    PrintToChat("[FF0000]WAR BETWEEN [00FF00]" + Capitalise(war[1]) + "[FF0000] AND " + Capitalise(war[2]) + "[FF0000] HAS BEGUN!");
+                }
+
+                timeLeft = timeLeft - 1;
+
+                //Store this value in the War Record
+                war[3] = timeLeft.ToString();
+
+                // If war has ended, let everyone know and end the war
+                if(timeLeft <= 0)
+                {
+                    PrintToChat("[FF0000] War Report [FFFFFF]([00FF00]WAR OVER![FFFFFF]) : The war between [00FF00]" + Capitalise(war[1]) + " [FFFFFF] and [00FF00]" + Capitalise(war[2]) + "[FFFFFF] has now ended!");
+                    EndWar(war[0]);
+                }
+            }
+        }
+        
+
+#endregion
+
+#region ENTITY HEALTH CHANGE AND DEATH
+
+        // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
+        private void OnEntityHealthChange(EntityDamageEvent damageEvent)
+        {
+            if (damageEvent.Damage.Amount < 0) return;
+            if (_noPeaceKilling)
+            {
+                if (
+                    damageEvent.Damage.Amount > 0 // taking damage
+                    && damageEvent.Entity.IsPlayer // entity taking damage is player
+                    && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
+                    && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
+                    && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
+                    )
+                {
+                    damageEvent.Cancel("Can Only Kill When At War");
+                    damageEvent.Damage.Amount = 0f;
+                    PrintToChat(damageEvent.Damage.DamageSource.Owner,
+                        "[FF0000]War General : [FFFFFF]You cannot attack another person when you are not at war with them!");
+                }
+            }
+            if (_noCrestKilling)
+            {
+                // Make sure it's not a player with a clever name! 
+                if (!damageEvent.Entity.IsPlayer)
+                {
+                    if (damageEvent.Entity.name.Contains("Crest"))
+                    {
+                        damageEvent.Cancel("Can Only Break Crests When At War");
+                        damageEvent.Damage.Amount = 0f;
+                        PrintToChat(damageEvent.Damage.DamageSource.Owner,
+                            "[FF0000]War General : [FFFFFF]You cannot break another guild's crest when you are not at war with them!");
+                    }
+                }
+            }
+        }
+
+        private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
+        {
+            if (_noBaseKilling)
+            {
+				var player = cubeDamageEvent.Damage.DamageSource.Owner;
+				var isAtWar = false;
+				
+                // CHeck if the guilds are at war
+				foreach(var war in WarList)
+				{
+					if(war[1].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower() || war[2].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower())
+					{
+						isAtWar = true;
+					}
+				}
+				
+				if (!isAtWar)
+                {
+                    // IF its a player attacking the base
+                    if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
+                    {
+                        bool trebuchet = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Trebuchet");
+                        bool ballista = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Ballista");
+                        if (trebuchet || ballista)
+                        {
+                            cubeDamageEvent.Damage.Amount = 0f;
+                            var message = "[FF0000]War General : [00FF00]" + player.DisplayName + "[FFFFFF]! You cannot attack this base when you are not at war with this guild!";
+                            PrintToChat(message);
+                            Log(message);
+                        }
+                    }
+                }
+            }
+        }
+
+#endregion
 		
+#region UTILITY METHODS
 		// Capitalise the Starting letters
 		private string Capitalise(string word)
 		{
@@ -502,5 +509,7 @@ namespace Oxide.Plugins
 			}
 			return finalText;
 		}
+#endregion
+
 	}
 }

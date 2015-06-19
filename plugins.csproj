@@ -30,17 +30,105 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\ROK_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\..\..\ROK_Data\Managed\protobuf-net.dll</HintPath>
+    </Reference>
+    <Reference Include="SteamworksManaged">
+      <HintPath>..\..\..\ROK_Data\Managed\SteamworksManaged.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="uLink">
+      <HintPath>..\..\..\ROK_Data\Managed\uLink.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\ROK_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityScript.Lang">
+      <HintPath>..\..\..\ROK_Data\Managed\UnityScript.Lang.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdminInfoDisplay.cs" />
+    <Compile Include="AllianceTracker.cs" />
+    <Compile Include="Announcer.cs" />
+    <Compile Include="BigBoss.cs" />
+    <Compile Include="BountyTracker.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="CrestAttacking.cs" />
+    <Compile Include="DailyHelper.cs" />
+    <Compile Include="Emotes.cs" />
+    <Compile Include="GuildInfo.cs" />
+    <Compile Include="Guildname.cs" />
+    <Compile Include="InstantTransmission.cs" />
+    <Compile Include="InventoryProtection.cs" />
+    <Compile Include="KilledBy.cs" />
+    <Compile Include="Kits.cs" />
+    <Compile Include="NightKillOnly.cs" />
+    <Compile Include="NoFriendlyFire.cs" />
+    <Compile Include="Ooc.cs" />
+    <Compile Include="Popups.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Pwn.cs" />
+    <Compile Include="RankTracker.cs" />
+    <Compile Include="SafeZones.cs" />
+    <Compile Include="SteamProfiler.cs" />
+    <Compile Include="TeleportToMe.cs" />
+    <Compile Include="TradeTracker.cs" />
+    <Compile Include="VoteHelper.cs" />
+    <Compile Include="WarTime.cs" />
+    <Compile Include="WarTracker.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Core\Oxide.Core.csproj">
+      <Project>{67f65f5d-a62a-4752-849d-bff30d828107}</Project>
+      <Name>Oxide.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Ext.CSharp\Oxide.Ext.CSharp.csproj">
+      <Project>{9103d682-d1aa-4a95-a499-896f551aaa62}</Project>
+      <Name>Oxide.Ext.CSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Ext.JavaScript\Oxide.Ext.JavaScript.csproj">
+      <Project>{3a9897bd-2022-4621-bc2c-f05ea39fa4ef}</Project>
+      <Name>Oxide.Ext.JavaScript</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Ext.Lua\Oxide.Ext.Lua.csproj">
+      <Project>{18d00f0b-8cf3-4002-940a-4a8ca449a352}</Project>
+      <Name>Oxide.Ext.Lua</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Ext.MySql\Oxide.Ext.MySql.csproj">
+      <Project>{d138493b-6f2e-4b9f-8f79-17b73422d87f}</Project>
+      <Name>Oxide.Ext.MySql</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Ext.Python\Oxide.Ext.Python.csproj">
+      <Project>{b05d4995-6e61-4e82-ac91-5a7b46ec9781}</Project>
+      <Name>Oxide.Ext.Python</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Ext.SQLite\Oxide.Ext.SQLite.csproj">
+      <Project>{c54ea613-c5fd-4acd-8ac4-79063b08cf5a}</Project>
+      <Name>Oxide.Ext.SQLite</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Ext.Unity\Oxide.Ext.Unity.csproj">
+      <Project>{52c26c5b-23e5-48a2-b403-5ff5c898e91a}</Project>
+      <Name>Oxide.Ext.Unity</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Game.ReignOfKings\Oxide.Game.ReignOfKings.csproj">
+      <Project>{e6788452-90f2-4388-a9bc-67d7ebbff8cd}</Project>
+      <Name>Oxide.Game.ReignOfKings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\OXIDE\Oxide\Oxide.Tests\Oxide.Tests.csproj">
+      <Project>{04dc61c2-e138-4d67-bfa1-50208dfa6b75}</Project>
+      <Name>Oxide.Tests</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
