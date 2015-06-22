@@ -14,8 +14,8 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.2.9")]
-    public class TradeTracker : ReignOfKingsPlugin
+    [Info("Grand Exchange", "Scorpyon", "1.3.1")]
+    public class GrandExchange : ReignOfKingsPlugin
     {
         #region MODIFIABLE VARIABLES (For server admin)
 
@@ -23,7 +23,7 @@ namespace Oxide.Plugins
 		private const double MaxDeflation = 5; // This is the deflation modifier. This is the most that a price can drop below its average price to buy and above it's price to sell(Percentage)
 		private const int PriceDeflationTime = 3600; // This dictates the number of seconds for each tick which brings the prices back towards their original values
 // (DEPRECATED)		private const int goldRewardForPvp = 10000; // This is the maximum amount of gold that can be stolen from a player for killing them.
-        private const int GoldStealPercentage = 20; // Thiws is the maximum percentage of gold that can be stolen from a player
+        private const int GoldStealPercentage = 20; // This is the maximum percentage of gold that can be stolen from a player
 		private const int GoldRewardForPve = 100; // This is the maximum amount rewarded to a player for killing monsters, etc. (When harvesting the dead body)
 		private bool _allowPvpGold = true; // Turns on/off gold for PVP
 		private bool _allowPveGold = true; // Turns on/off gold for PVE
@@ -367,6 +367,16 @@ namespace Oxide.Plugins
 			if(!_playerWallet.ContainsKey(player.Id))
 			{
 				_playerWallet.Add(player.Id,0);
+			}
+		}
+
+		private void CheckWalletExists(ulong playerId)
+		{
+			//Check if the player has a wallet yet
+			if(_playerWallet.Count < 1) _playerWallet.Add(playerId,0);
+			if(!_playerWallet.ContainsKey(playerId))
+			{
+				_playerWallet.Add(playerId,0);
 			}
 		}
         
@@ -2307,8 +2317,10 @@ namespace Oxide.Plugins
                 currentGold = MaxPossibleGold;
             }
             else currentGold = currentGold + amount;
-
+			
+			CheckWalletExists(player);
             _playerWallet[player.Id] = currentGold;
+			SaveTradeData();
         }
 
         private void GiveGold(ulong playerId, int amount)
@@ -2323,7 +2335,9 @@ namespace Oxide.Plugins
             }
             else currentGold = currentGold + amount;
 
+			CheckWalletExists(playerId);
             _playerWallet[playerId] = currentGold;
+			SaveTradeData();
         }
 
         private bool CanRemoveGold(Player player, int amount)
