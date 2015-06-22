@@ -8,7 +8,7 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.1.3")]
+    [Info("WarTracker", "Scorpyon", "1.1.4")]
     public class WarTracker : ReignOfKingsPlugin
     {
 #region MODIFIABLE VARIABLES
@@ -18,7 +18,7 @@ namespace Oxide.Plugins
         // MODIFY THIS VALUE TO THE NUMBER OF 'SECONDS' THAT YOU WANT BETWEEN WAR UPDATE REPORTS TO PLAYERS 
         private const int WarReportInterval = 300; // Currently 5 minutes
         // MODIFY THIS VALUE FOR PREPARATION TIME BEFORE WAR STARTS
-        private const int WarPrepTime = 600; // Total prep time in seconds = Currently 10 minutes
+        private const int WarPrepTime = 3600; // Total prep time in seconds = Currently 10 minutes
         private const int WarPrepTimeHours = 0;         //
         private const int WarPrepTimeMinutes = 10;      // These are for text purposes to save time on calculations later
         private const int WarPrepTimeSeconds = 0;       //
@@ -95,6 +95,8 @@ namespace Oxide.Plugins
 
             // End all Wars in the List
             WarList = new Collection<Collection<string>>();
+
+            SaveWarListData();
         }
 
         // CHEAT COMMAND for end specific wars
@@ -178,10 +180,10 @@ namespace Oxide.Plugins
                 PrintToChat(player, "[FF0000]War Squire[FFFFFF] : My Lord, you have not yet formed a guild. You must do so before you can declare a war!");
                 return;
             }
-            string playerGuild = PlayerExtensions.GetGuild(targetPlayer).DisplayName;
+            string playerGuild = PlayerExtensions.GetGuild(targetPlayer).Name.ToLower();
 
             // Check they are not in the same guild
-            string myGuild = PlayerExtensions.GetGuild(player).DisplayName;
+            string myGuild = PlayerExtensions.GetGuild(player).Name.ToLower();
             
             // Remove unneccessary [0] at start of string
             playerGuild = playerGuild.Replace("[0]","");
@@ -332,10 +334,15 @@ namespace Oxide.Plugins
             var playerGuild = PlayerExtensions.GetGuild(player).Name.ToLower();
             var targetGuild = PlayerExtensions.GetGuild(target).Name.ToLower();
 
+            //PrintToChat(player, playerGuild.ToLower() + " " + targetGuild.ToLower());
+            //PrintToChat(player, "Number of wars = " + WarList.Count);
+            ////PrintToChat(player, "First war in list = " + WarList[0][0] + " " + WarList[0][1] + " " + WarList[0][2]);
+
             foreach (var war in WarList)
             {
-                if (war[2] == playerGuild && war[1] == targetGuild) return true;
-                if (war[1] == playerGuild && war[2] == targetGuild) return true;
+                PrintToChat(player, playerGuild.ToLower() + " " + targetGuild.ToLower() + " " + war[1].ToLower() + " " + war[2].ToLower() );
+                if (war[2].ToLower() == playerGuild.ToLower() && war[1].ToLower() == targetGuild.ToLower()) return true;
+                if (war[1].ToLower() == playerGuild.ToLower() && war[2].ToLower() == targetGuild.ToLower()) return true;
             }
 
             return false;
@@ -418,9 +425,11 @@ namespace Oxide.Plugins
         // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
         private void OnEntityHealthChange(EntityDamageEvent damageEvent)
         {
+            //PrintToChat("Damage detected");
             if (damageEvent.Damage.Amount < 0) return;
             if (_noPeaceKilling)
             {
+                //PrintToChat("Checking if allowed...");
                 if (
                     damageEvent.Damage.Amount > 0 // taking damage
                     && damageEvent.Entity.IsPlayer // entity taking damage is player
@@ -429,8 +438,10 @@ namespace Oxide.Plugins
                     && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
                     )
                 {
-                    damageEvent.Cancel("Can Only Kill When At War");
+                    //PrintToChat("Cancelling Damage");
                     damageEvent.Damage.Amount = 0f;
+                    //PrintToChat("Damage amount - " + damageEvent.Damage.Amount);
+                    damageEvent.Cancel("Can Only Kill When At War");
                     PrintToChat(damageEvent.Damage.DamageSource.Owner,
                         "[FF0000]War General : [FFFFFF]You cannot attack another person when you are not at war with them!");
                 }

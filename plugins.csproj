@@ -86,6 +86,7 @@
     <Compile Include="TeleportToMe.cs" />
     <Compile Include="TradeTracker.cs" />
     <Compile Include="VoteHelper.cs" />
+    <Compile Include="WarpShrine.cs" />
     <Compile Include="WarTime.cs" />
     <Compile Include="WarTracker.cs" />
   </ItemGroup>

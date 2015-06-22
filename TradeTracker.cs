@@ -14,7 +14,7 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.2.7")]
+    [Info("Trade Tracker", "Scorpyon", "1.2.8")]
     public class TradeTracker : ReignOfKingsPlugin
     {
         #region MODIFIABLE VARIABLES (For server admin)
@@ -264,6 +264,7 @@ namespace Oxide.Plugins
         // 3 - Buy Price
         // 4 - Sell Price
         private Dictionary<string, int> _wallet = new Dictionary<string, int>();
+        private Dictionary<ulong, int> _playerWallet = new Dictionary<ulong, int>();
 
 		private const int PriceModifier = 1000; // Best not to change this unless you have to! I don't know what would happen to prices! 
 		private readonly System.Random _random = new System.Random();
@@ -272,10 +273,15 @@ namespace Oxide.Plugins
 		private const int MaxPossibleGold = 2100000000; // DO NOT RAISE THIS ANY HIGHER - 32-bit INTEGER FLOOD WARNING	
 
 		private Collection<double[]> _markList = new Collection<double[]>();
-		private Dictionary<string,double[]> _shopMarks = new Dictionary<string,double[]>();
-		private double _sellPercentage = 50; // Use the /sellPercentage command to change this NOT here!
+        private Dictionary<string, double[]> _shopMarks = new Dictionary<string, double[]>();
+        private Dictionary<ulong, double[]> _shopLocs = new Dictionary<ulong, double[]>();
+        private double _sellPercentage = 50; // Use the /sellPercentage command to change this NOT here!
 
-        private Dictionary<string,Collection<string[]>> _playerShop = new Dictionary<string,Collection<string[]>>();
+        private Dictionary<string, Collection<string[]>> _playerShop = new Dictionary<string, Collection<string[]>>();
+        // 0 - Item name
+        // 1 - Price
+        // 2 - Amount
+        private Dictionary<ulong, Collection<string[]>> _shopPlayer = new Dictionary<ulong, Collection<string[]>>();
         // 0 - Item name
         // 1 - Price
         // 2 - Amount
@@ -291,12 +297,15 @@ namespace Oxide.Plugins
         {
             _tradeDefaults = Interface.GetMod().DataFileSystem.ReadObject<Collection<string[]>>("SavedTradeDefaults");
             _tradeList = Interface.GetMod().DataFileSystem.ReadObject<Collection<string[]>>("SavedTradeList");
-            _wallet = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string,int>>("SavedTradeWallet");
+            _wallet = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string, int>>("SavedTradeWallet");
+            _playerWallet = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<ulong, int>>("SavedTradeWalletById");
             _markList = Interface.GetMod().DataFileSystem.ReadObject<Collection<double[]>>("SavedMarkList");
             _sellPercentage = Interface.GetMod().DataFileSystem.ReadObject<double>("SavedSellPercentage");
-            _playerShop = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string,Collection<string[]>>>("SavedPlayerShop");
+            _playerShop = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string, Collection<string[]>>>("SavedPlayerShop");
+            _shopPlayer = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<ulong, Collection<string[]>>>("SavedPlayerShopById");
             _tradeMasters = Interface.GetMod().DataFileSystem.ReadObject<Collection<string>>("SavedTradeMasters");
-            _shopMarks = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string,double[]>>("SavedPlayerShopMarks");
+            _shopMarks = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string, double[]>>("SavedPlayerShopMarks");
+            _shopLocs = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<ulong, double[]>>("SavedPlayerShopLocs");
         }
 
         private void SaveTradeData()
@@ -304,18 +313,46 @@ namespace Oxide.Plugins
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeDefaults", _tradeDefaults);
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeList", _tradeList);
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeWallet", _wallet);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedTradeWalletById", _playerWallet);
             Interface.GetMod().DataFileSystem.WriteObject("SavedMarkList", _markList);
             Interface.GetMod().DataFileSystem.WriteObject("SavedSellPercentage", _sellPercentage);
             Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShop", _playerShop);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShopById", _shopPlayer);
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeMasters", _tradeMasters);
             Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShopMarks", _shopMarks);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShopLocs", _shopLocs);
         }
 		
 		private void OnPlayerConnected(Player player)
 		{
 			CheckWalletExists(player);
 			CheckShopExists(player);
-			
+
+
+            // This should port over the previous player shop and wallet system to the new Id version 
+            if (_playerShop.ContainsKey(player.Name.ToLower()))
+            {
+                if (!_shopPlayer.ContainsKey(player.Id))
+                {
+                    var shop = _playerShop[player.Name.ToLower()];
+                    _shopPlayer.Add(player.Id, shop);
+                }
+                _playerShop.Remove(player.Name.ToLower());
+            }
+
+            if(_wallet.ContainsKey(player.Name.ToLower()))
+            {
+                if(!_playerWallet.ContainsKey(player.Id)) _playerWallet.Add(player.Id, _wallet[player.Name.ToLower()]);
+                _wallet.Remove(player.Name.ToLower());
+            }
+
+            if(_shopMarks.ContainsKey(player.Name.ToLower()))
+            {
+                if (!_shopLocs.ContainsKey(player.Id)) _shopLocs.Add(player.Id, _shopMarks[player.Name.ToLower()]);
+                _shopMarks.Remove(player.Name.ToLower());
+            }
+            // ---------------------------------------------------------------
+
 			// Save the trade data
             SaveTradeData();
 		}
@@ -324,20 +361,20 @@ namespace Oxide.Plugins
 		private void CheckWalletExists(Player player)
 		{
 			//Check if the player has a wallet yet
-			if(_wallet.Count < 1) _wallet.Add(player.Name.ToLower(),0);
-			if(!_wallet.ContainsKey(player.Name.ToLower()))
+			if(_playerWallet.Count < 1) _playerWallet.Add(player.Id,0);
+			if(!_playerWallet.ContainsKey(player.Id))
 			{
-				_wallet.Add(player.Name.ToLower(),0);
+				_playerWallet.Add(player.Id,0);
 			}
 		}
         
 		private void CheckShopExists(Player player)
 		{
 			//Check if the player has a wallet yet
-			if(_playerShop.Count < 1) _playerShop.Add(player.Name.ToLower(),new Collection<string[]>());
-			if(!_playerShop.ContainsKey(player.Name.ToLower()))
+			if(_shopPlayer.Count < 1) _shopPlayer.Add(player.Id,new Collection<string[]>());
+			if(!_shopPlayer.ContainsKey(player.Id))
 			{
-				_playerShop.Add(player.Name.ToLower(),new Collection<string[]>());
+				_shopPlayer.Add(player.Id,new Collection<string[]>());
 			}
 		}
 		
@@ -345,7 +382,7 @@ namespace Oxide.Plugins
         {
             LoadTradeData();
 			_tradeDefaults = LoadDefaultTradeValues();
-            
+
 			//If there's no trade data stored, then set up the new trade data from the defaults
             if(_tradeList.Count < 1)
             {
@@ -669,13 +706,13 @@ namespace Oxide.Plugins
 
         private void RemoveAPlayerShopMarker(Player player, string cmd)
         {
-            if (!_shopMarks.ContainsKey(player.Name.ToLower()))
+            if (!_shopLocs.ContainsKey(player.Id))
             {
                 PrintToChat(player, "You do not currently have any shop markers set.");
                 return;
             }
 
-            _shopMarks.Remove(player.Name.ToLower());
+            _shopLocs.Remove(player.Id);
             PrintToChat(player, "You have removed all of your shop markers. Your shop is not accessible until you place new markers down using /addshopmarker");
 
             SaveTradeData();
@@ -694,17 +731,6 @@ namespace Oxide.Plugins
             SaveTradeData();
         }
 
-        private void OnObjectDeploy(NetworkInstantiateEvent e)
-		{
-            Player player = Server.GetPlayerById(e.SenderId);
-            if (player == null) return;
-            InvItemBlueprint bp = InvDefinitions.Instance.Blueprints.GetBlueprintForID(e.BlueprintId);
-            //PrintToChat(player, "You have placed a " + bp.Name + ".");
-            //PrintToChat(player, e.Position.x.ToString());
-            //PrintToChat(player, e.Position.z.ToString());
-        }
-
-
         private void GetThePlayersCurrentLocation(Player player, string cmd, string[] args)
         {
             if (!player.HasPermission("admin") && !PlayerIsATradeMaster(player.Name.ToLower()))
@@ -718,15 +744,30 @@ namespace Oxide.Plugins
 
         #endregion
 
+        #region OBJECT DEPLOYMENT
+
+
+        private void OnObjectDeploy(NetworkInstantiateEvent e)
+        {
+            Player player = Server.GetPlayerById(e.SenderId);
+            if (player == null) return;
+            InvItemBlueprint bp = InvDefinitions.Instance.Blueprints.GetBlueprintForID(e.BlueprintId);
+            //PrintToChat(player, "You have placed a " + bp.Name + ".");
+            //PrintToChat(player, e.Position.x.ToString());
+            //PrintToChat(player, e.Position.z.ToString());
+        }
+
+        #endregion
+
         #region PLAYER SHOPS
 
 
-        private string GetPlayerWhoOwnsThisShop(Player player)
+        private ulong GetPlayerWhoOwnsThisShop(Player player)
         {
             // Is there a designated trade area?
-            if (_shopMarks.Count < 1) return "";
+            if (_shopLocs.Count < 1) return 0;
             var isInArea = false;
-            foreach (var shop in _shopMarks)
+            foreach (var shop in _shopLocs)
             {
                 var coords = shop.Value;
                 var posX1 = coords[0];
@@ -747,7 +788,7 @@ namespace Oxide.Plugins
                 }
             }
 
-            return "";
+            return 0;
         }
 
         private void AddAPlayerShopMarker(Player player, string cmd)
@@ -758,19 +799,19 @@ namespace Oxide.Plugins
             CheckIfPlayerOwnsAShop(player);
 
             // Check if the player has a shop marker set up
-            if (!_shopMarks.ContainsKey(player.Name.ToLower()))
+            if (!_shopLocs.ContainsKey(player.Id))
             {
-                _shopMarks.Add(player.Name.ToLower(), newLocSet);
+                _shopLocs.Add(player.Id, newLocSet);
             }
 
             // Check if this is a marked area already
-            if (GetPlayerWhoOwnsThisShop(player) != "")
+            if (GetPlayerWhoOwnsThisShop(player) != 0)
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : There is already a shop in this area.");
                 return;
             }
 
-            var myMarks = _shopMarks[player.Name.ToLower()];
+            var myMarks = _shopLocs[player.Id];
 
             if (myMarks[0] != 0)
             {
@@ -801,9 +842,9 @@ namespace Oxide.Plugins
 
         private void CheckIfPlayerOwnsAShop(Player player)
         {
-            if (!_playerShop.ContainsKey(player.Name.ToLower()))
+            if (!_shopPlayer.ContainsKey(player.Id))
             {
-                _playerShop.Add(player.Name.ToLower(), new Collection<string[]>());
+                _shopPlayer.Add(player.Id, new Collection<string[]>());
             }
             SaveTradeData();
         }
@@ -821,19 +862,18 @@ namespace Oxide.Plugins
         private void SetThePriceOfAnItemInYourShop(Player player, string cmd, string[] input)
 		{
 			// Find this player's shop
-            if (!_playerShop.ContainsKey(player.Name.ToLower()))
+            if (!_shopPlayer.ContainsKey(player.Id))
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You don't appear to currently own a shop.");
                 return;
             }
 			
-			int amount;
-			if(Int32.TryParse(input[1], out amount) == false)
-			{	
-				PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You entered an invalid amount. Please use the format - /setitemprice '<item_name>' <amount>");
-				return;
-			}
-			
+            if(input.Length<2)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : Please use the format: /setprice \"Item Name\" <amount>.");
+                return;
+            }
+
             var resource = Capitalise(input[0]);
 
 			// Check if the item exists in the default list
@@ -854,9 +894,18 @@ namespace Oxide.Plugins
 				PrintToChat(player, resource + " does not appear to be a recognised item. Did you spell it correctly and use quotes around the item name?");
 				return;
 			}
+
+
+            int amount;
+            if (Int32.TryParse(input[1], out amount) == false)
+            {
+                PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You entered an invalid amount. Please use the format - /setitemprice '<item_name>' <amount>");
+                return;
+            }
+			
 			
 			CheckShopExists(player);
-			var myShop = _playerShop[player.Name.ToLower()];
+			var myShop = _shopPlayer[player.Id];
 			foreach(var item in myShop)
 			{
 				if(item[0].ToLower() == resource.ToLower())
@@ -873,20 +922,20 @@ namespace Oxide.Plugins
         {
             // Is the player in a shop area?
             var shopOwnerName = GetPlayerWhoOwnsThisShop(player);
-            if (shopOwnerName.ToLower() == "")
+            if (shopOwnerName == 0)
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : There does not appear to be a shop here.");
                 return;
             }
 			
             // Find this player's shop
-            if (!_playerShop.ContainsKey(shopOwnerName.ToLower()))
+            if (!_shopPlayer.ContainsKey(shopOwnerName))
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : This shop doesn't appear to be open right now.");
                 return;
             }
 
-            var myShop = _playerShop[shopOwnerName];
+            var myShop = _shopPlayer[shopOwnerName];
 
              // Are there any items on the store?
             if(myShop.Count < 1)
@@ -897,7 +946,7 @@ namespace Oxide.Plugins
 
 			// Get the player's wallet contents
 			CheckWalletExists(player);
-			var credits = _wallet[player.Name.ToLower()];
+			var credits = _playerWallet[player.Id];
 			
             var buyIcon = "[008888]";
             var sellIcon = "[008888]";
@@ -925,7 +974,7 @@ namespace Oxide.Plugins
 			
 			itemText = itemText + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString() + "[FFFF00]g";
 
-            var shopName = Capitalise(shopOwnerName) + "'s Store";
+            var shopName = "Local Store";
 
             // Show the Shop
 			player.ShowConfirmPopup(shopName, itemText, "Buy", "Exit", (selection, dialogue, data) => BuyItemFromPlayerShop(player, shopOwnerName, myShop, selection, dialogue, data, itemsPerPage, itemsPerPage));
@@ -933,7 +982,7 @@ namespace Oxide.Plugins
         }
 
 
-        private void BuyItemFromPlayerShop(Player player, string shopOwnerName, Collection<string[]> myShop,
+        private void BuyItemFromPlayerShop(Player player, ulong shopOwnerName, Collection<string[]> myShop,
             Options selection, Dialogue dialogue, object contextData, int itemsPerPage, int currentItemCount)
         {
             if (selection != Options.Yes)
@@ -947,7 +996,7 @@ namespace Oxide.Plugins
         }
 
         
-		private void SelectItemToBeBoughtFromPlayer(Player player, string shopOwnerName, Options selection, Dialogue dialogue, object contextData)
+		private void SelectItemToBeBoughtFromPlayer(Player player, ulong shopOwnerName, Options selection, Dialogue dialogue, object contextData)
 		{
 			if (selection == Options.Cancel)
             {
@@ -958,7 +1007,7 @@ namespace Oxide.Plugins
 			var resourceFound = false;
 			var resourceDetails = new string[3];
 
-		    var myShop = _playerShop[shopOwnerName];
+		    var myShop = _shopPlayer[shopOwnerName];
 			
 			// Get the resource's details
 			foreach(var item in myShop)
@@ -992,14 +1041,14 @@ namespace Oxide.Plugins
 			
 			// Get the player's wallet contents
 			CheckWalletExists(player);
-			var credits = _wallet[player.Name.ToLower()];
+			var credits = _playerWallet[player.Id];
 			message = message + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
 			
 			player.ShowInputPopup(shopOwnerName + "'s Store", message, "", "Submit", "Cancel", (options, dialogue1, data) => SelectAmountToBeBoughtFromPlayerStore(player, shopOwnerName, maxStack, options, dialogue1, data, resourceDetails));
 		}
 		
         
-		private void SelectAmountToBeBoughtFromPlayerStore(Player player, string shopOwnerName, int maxStack, Options selection, Dialogue dialogue, object contextData, string[] resourceDetails)
+		private void SelectAmountToBeBoughtFromPlayerStore(Player player, ulong shopOwnerName, int maxStack, Options selection, Dialogue dialogue, object contextData, string[] resourceDetails)
 		{
 			if (selection == Options.Cancel)
             {
@@ -1030,7 +1079,7 @@ namespace Oxide.Plugins
 			
 			// Get the player's wallet contents
 			CheckWalletExists(player);
-			var credits = _wallet[player.Name.ToLower()];
+			var credits = _playerWallet[player.Id];
 			message = message + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
 			
 			//Show Popup with the final price
@@ -1044,7 +1093,7 @@ namespace Oxide.Plugins
 			
             // Is the player in a shop area?
             var shopOwnerName = GetPlayerWhoOwnsThisShop(player);
-            if (shopOwnerName == "")
+            if (shopOwnerName == 0)
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You need to be in your shop to view the items there!");
                 return;
@@ -1056,7 +1105,7 @@ namespace Oxide.Plugins
             CheckShopExists(player);
 
             //Is there anything in the shop right now?
-            if (_playerShop[playerName.ToLower()].Count < 1)
+            if (_shopPlayer[player.Id].Count < 1)
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : Your shop is currently empty.");
                 return;
@@ -1072,7 +1121,7 @@ namespace Oxide.Plugins
             var playerName = player.Name;
             // Is the player in a shop area?
             var shopOwnerName = GetPlayerWhoOwnsThisShop(player);
-            if (shopOwnerName == "" || shopOwnerName != player.Name.ToLower())
+            if (shopOwnerName == 0 || shopOwnerName != player.Id)
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You need to be in your shop to remove the items from there!");
                 return;
@@ -1113,7 +1162,7 @@ namespace Oxide.Plugins
 			}
 			
 			//Check if the item is in the shop
-			var stock = _playerShop[player.Name.ToLower()];
+			var stock = _shopPlayer[player.Id];
 			for(var i=0; i < stock.Count; i++)
 			{
 				if(stock[i][0].ToLower() == resource.ToLower())
@@ -1157,9 +1206,10 @@ namespace Oxide.Plugins
 			CheckIfPlayerOwnsAShop(player);
 
             var playerName = player.Name;
+            var playerId = player.Id;
             // Is the player in a shop area?
             var shopOwnerName = GetPlayerWhoOwnsThisShop(player);
-            if (shopOwnerName == "" || shopOwnerName != player.Name.ToLower())
+            if (shopOwnerName == 0 || shopOwnerName != playerId)
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You need to be in your shop to view the items there!");
                 return;
@@ -1207,9 +1257,9 @@ namespace Oxide.Plugins
             }
             
             // Add this resource to the player's shop
-            if (_playerShop.ContainsKey(playerName.ToLower()))
+            if (_shopPlayer.ContainsKey(playerId))
             {
-                var shop = _playerShop[playerName.ToLower()];
+                var shop = _shopPlayer[playerId];
                 var stock = new string[3];
 
                 //If the item already exists, add it to the current stock
@@ -1316,7 +1366,7 @@ namespace Oxide.Plugins
 
             // Get the player's wallet contents
             CheckWalletExists(player);
-            var credits = _wallet[player.Name.ToLower()];
+            var credits = _playerWallet[player.Id];
             message = message + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
 
             player.ShowInputPopup("Grand Exchange", message, "", "Submit", "Cancel", (options, dialogue1, data) => SelectAmountToBeBought(player, options, dialogue1, data, resourceDetails));
@@ -1352,11 +1402,11 @@ namespace Oxide.Plugins
 
             // Get the player's wallet contents
             CheckWalletExists(player);
-            var credits = _wallet[player.Name.ToLower()];
+            var credits = _playerWallet[player.Id];
             message = message + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
 
             //Show Popup with the final price
-            player.ShowConfirmPopup("Grand Exchange", message, "Submit", "Cancel", (options, dialogue1, data) => CheckIfThePlayerCanAffordThis(player, "", options, dialogue, data, resourceDetails, totalValue, amount));
+            player.ShowConfirmPopup("Grand Exchange", message, "Submit", "Cancel", (options, dialogue1, data) => CheckIfThePlayerCanAffordThis(player, 0, options, dialogue, data, resourceDetails, totalValue, amount));
         }
 
         private void CheckIfThePlayerHasTheResourceToSell(Player player, Options selection, Dialogue dialogue, object contextData, string[] resourceDetails, int totalValue, int amount)
@@ -1436,7 +1486,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private void CheckIfThePlayerCanAffordThis(Player player, string shopOwnerName, Options selection, Dialogue dialogue, object contextData, string[] resourceDetails, double totalValue, int amount)
+        private void CheckIfThePlayerCanAffordThis(Player player, ulong shopOwnerName, Options selection, Dialogue dialogue, object contextData, string[] resourceDetails, double totalValue, int amount)
         {
             if (selection != Options.Yes)
             {
@@ -1459,9 +1509,9 @@ namespace Oxide.Plugins
             }
 
             // Check the items haven't just been bought
-            if (shopOwnerName != "")
+            if (shopOwnerName != 0)
             {
-                var thisShop = _playerShop[shopOwnerName.ToLower()];
+                var thisShop = _shopPlayer[shopOwnerName];
                 if (thisShop.Count < 1)
                 {
                     PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : I'm terribly sorry, but someone has just bought that item!");
@@ -1490,9 +1540,12 @@ namespace Oxide.Plugins
             RemoveGold(player, (int)totalValue);
 
             // Pay the shopkeeper
-            GiveGold(shopOwnerName.ToLower(), (int)totalValue);
+            if (shopOwnerName != 0)
+            {
+                GiveGold(shopOwnerName, (int)totalValue);
+            }
 
-            if (shopOwnerName == "")
+            if (shopOwnerName == 0)
             {
                 // Fix themarket price adjustment
                 AdjustMarketPrices("buy", resourceDetails[0], amount);
@@ -1500,7 +1553,7 @@ namespace Oxide.Plugins
             else
             {
                 // Remove the items from the shop
-                var myShop = _playerShop[shopOwnerName.ToLower()];
+                var myShop = _shopPlayer[shopOwnerName];
 
                 for (var i = 0; i < myShop.Count; i++)
                 {
@@ -1582,7 +1635,7 @@ namespace Oxide.Plugins
 
             // Get the player's wallet contents
             CheckWalletExists(player);
-            var credits = _wallet[player.Name.ToLower()];
+            var credits = _playerWallet[player.Id];
             message = message + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
 
             player.ShowInputPopup("Grand Exchange", message, "", "Submit", "Cancel", (options, dialogue1, data) => SelectAmountToBeSold(player, options, dialogue1, data, resourceDetails));
@@ -1618,7 +1671,7 @@ namespace Oxide.Plugins
 
             // Get the player's wallet contents
             CheckWalletExists(player);
-            var credits = _wallet[player.Name.ToLower()];
+            var credits = _playerWallet[player.Id];
             message = message + "\n\n[FF0000]Gold Available[FFFFFF] : [00FF00]" + credits.ToString();
 
             //Show Popup with the final price
@@ -1638,7 +1691,7 @@ namespace Oxide.Plugins
 
             // Get the player's wallet contents
             CheckWalletExists(player);
-            var credits = _wallet[player.Name.ToLower()];
+            var credits = _playerWallet[player.Id];
 
             // Check if player exists (For Unit Testing)
             var buyIcon = "[008888]";
@@ -1706,7 +1759,7 @@ namespace Oxide.Plugins
 
             // Get the player's wallet contents
             CheckWalletExists(player);
-            var credits = _wallet[player.Name.ToLower()];
+            var credits = _playerWallet[player.Id];
 
             var buyIcon = "[008888]";
             var sellIcon = "[008888]";
@@ -2010,9 +2063,9 @@ namespace Oxide.Plugins
                 return;
             }
 
-            if (input.Length == 0)
+            if (input.Length < 3)
             {
-                PrintToChat(player, "Usage: Type /setprice 'Resource_in_Quotes' <amount>");
+                PrintToChat(player, "Usage: Type /setprice \"Resource Name\" <amount>");
                 return;
             }
 
@@ -2214,9 +2267,9 @@ namespace Oxide.Plugins
                 PrintToChat(player, "You entered an invalid amount. Please enter in the format: /setplayergold 'Name_In_Quotes' <amount>");
                 return;
             }
-
+            var targetId = Server.GetPlayerByName(playerName).Id;
             CheckWalletExists(target);
-            _wallet[playerName.ToLower()] = amount;
+            _playerWallet[targetId] = amount;
             PrintToChat(player, "You have set gold amount for " + playerName + " to " + amount.ToString());
             SaveTradeData();
         }
@@ -2229,7 +2282,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            _wallet = new Dictionary<string, int>();
+            _playerWallet = new Dictionary<ulong, int>();
 
             PrintToChat(player, "All players' gold has been removed!");
 
@@ -2245,7 +2298,7 @@ namespace Oxide.Plugins
         private void GiveGold(Player player, int amount)
         {
             var playerName = player.Name.ToLower();
-            var currentGold = _wallet[playerName];
+            var currentGold = _playerWallet[player.Id];
             if (currentGold + amount > MaxPossibleGold)
             {
                 PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot gain any more gold than you now have. Congratulations. You are the richest player. Goodbye.");
@@ -2253,30 +2306,28 @@ namespace Oxide.Plugins
             }
             else currentGold = currentGold + amount;
 
-            _wallet.Remove(playerName);
-            _wallet.Add(playerName, currentGold);
+            _playerWallet[player.Id] = currentGold;
         }
 
-        private void GiveGold(string playerName, int amount)
+        private void GiveGold(ulong playerId, int amount)
         {
-            if (!_wallet.ContainsKey(playerName)) return;
-            var currentGold = _wallet[playerName];
+            if (!_playerWallet.ContainsKey(playerId)) return;
+            var currentGold = _playerWallet[playerId];
             if (currentGold + amount > MaxPossibleGold)
             {
-                var player = Server.GetPlayerByName(playerName);
+                var player = Server.GetPlayerById(playerId);
                 if (player != null) PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : You cannot gain any more gold than you now have. Congratulations. You are the richest player. Goodbye.");
                 currentGold = MaxPossibleGold;
             }
             else currentGold = currentGold + amount;
 
-            _wallet.Remove(playerName);
-            _wallet.Add(playerName, currentGold);
+            _playerWallet[playerId] = currentGold;
         }
 
         private bool CanRemoveGold(Player player, int amount)
         {
             var playerName = player.Name.ToLower();
-            var currentGold = _wallet[playerName];
+            var currentGold = _playerWallet[player.Id];
             if (currentGold - amount < 0) return false;
             return true;
         }
@@ -2284,11 +2335,10 @@ namespace Oxide.Plugins
         private void RemoveGold(Player player, int amount)
         {
             var playerName = player.Name.ToLower();
-            var currentGold = _wallet[playerName];
+            var currentGold = _playerWallet[player.Id];
             currentGold = currentGold - amount;
 
-            _wallet.Remove(playerName);
-            _wallet.Add(playerName, currentGold);
+            _playerWallet[player.Id] = currentGold;
         }
 		
         private void TogglePvpGoldStealing(Player player, string cmd)
@@ -2331,7 +2381,7 @@ namespace Oxide.Plugins
         private void CheckHowMuchGoldICurrentlyHave(Player player, string cmd)
         {
             CheckWalletExists(player);
-			var walletAmount = _wallet[player.Name.ToLower()];
+			var walletAmount = _playerWallet[player.Id];
 			PrintToChat(player,"You currently have [00FF00]" + walletAmount.ToString() + "[FFFF00]g[FFFFFF].");
         }
 
@@ -2394,7 +2444,7 @@ namespace Oxide.Plugins
             }
 
             CheckWalletExists(target);
-            var goldAmount = _wallet[target.Name.ToLower()];
+            var goldAmount = _playerWallet[target.Id];
             PrintToChat(player, target.Name + " currently has " + goldAmount.ToString() + " gold.");
         }
 
@@ -2461,7 +2511,7 @@ namespace Oxide.Plugins
 						// Check the player has a wallet
 						CheckWalletExists(killer);
 						// Give the rewards to the player
-						var victimGold = _wallet[player.Name.ToLower()];
+						var victimGold = _playerWallet[player.Id];
 					    var goldReward = (int)(victimGold * (double)(GoldStealPercentage / 100));
 						var goldAmount = _random.Next(0,goldReward);
 						if(goldAmount > victimGold) goldAmount = victimGold;
