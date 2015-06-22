@@ -14,7 +14,7 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("Trade Tracker", "Scorpyon", "1.2.8")]
+    [Info("Trade Tracker", "Scorpyon", "1.2.9")]
     public class TradeTracker : ReignOfKingsPlugin
     {
         #region MODIFIABLE VARIABLES (For server admin)
@@ -253,6 +253,8 @@ namespace Oxide.Plugins
 		
 #region Server Variables (Do not modify!)
 
+        void Log(string msg) => Puts($"{Title} : {msg}");
+        
         private Collection<string[]> _tradeDefaults = new Collection<string[]>();
         // 0 - Resource name
         // 1 - Original Price
@@ -2480,15 +2482,38 @@ namespace Oxide.Plugins
 
         // Give credits when a player is killed
 		private void OnEntityDeath(EntityDeathEvent deathEvent)
-        {
+		{
+		    if (deathEvent.Entity == null) return;
 			if(deathEvent.Entity.Owner.Name == "server") return;
 			
 			if(_allowPvpGold)
 			{
 				if (deathEvent.Entity.IsPlayer)
 				{
-					var killer = deathEvent.KillingDamage.DamageSource.Owner;
+				    if (deathEvent.KillingDamage == null)
+				    {
+				        Log("deathEvent.KillingDamage was null here!"); 
+                        return;
+				    }
+				    if (deathEvent.KillingDamage.DamageSource == null)
+				    {
+                        Log("deathEvent.KillingDamage.DamageSource was null here!"); 
+				        return;
+				    }
+                    
+                    var killer = deathEvent.KillingDamage.DamageSource.Owner;
 					var player = deathEvent.Entity.Owner;
+
+				    if (player == null)
+				    {
+                        Log("player variable was null here.");
+				        return;
+				    }
+				    if (killer == null)
+				    {
+                        Log("killer variable was null here");
+				        return;
+				    }
 
 					// Make sure player didn't kill themselves
 					if(player == killer) return;
@@ -2496,6 +2521,11 @@ namespace Oxide.Plugins
 					// Make sure the player is not in the same guild
 					if(player.GetGuild().Name == killer.GetGuild().Name)
 					{
+					    if (player.GetGuild() == null || killer.GetGuild() == null)
+					    {
+                            Log("The player or the killer guild was null here.");
+					        return;
+					    }
 						PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : There is no honour - or more importantly, gold! - in killing a member of your own guild!");
 						return;
 					}
@@ -2504,7 +2534,7 @@ namespace Oxide.Plugins
 					if(deathEvent.KillingDamage.DamageSource.IsPlayer)
 					{
 						// Get the inventory
-						var inventory = killer.GetInventory();
+						//var inventory = killer.GetInventory();
 						
 						// Check victims wallet
 						CheckWalletExists(player);

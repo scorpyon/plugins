@@ -63,7 +63,6 @@
     <Compile Include="Announcer.cs" />
     <Compile Include="BigBoss.cs" />
     <Compile Include="BountyTracker.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="CrestAttacking.cs" />
     <Compile Include="DailyHelper.cs" />
     <Compile Include="Emotes.cs" />

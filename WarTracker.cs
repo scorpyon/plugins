@@ -483,8 +483,13 @@ namespace Oxide.Plugins
                     // IF its a player attacking the base
                     if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
                     {
-                        bool trebuchet = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Trebuchet");
-                        bool ballista = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Ballista");
+                        
+                    }
+                    // Or if it's a siege weapon
+                    else if (cubeDamageEvent.Damage.Amount > 50)
+                    {
+                        bool trebuchet = cubeDamageEvent.Damage.Damager.name.Contains("Trebuchet");
+                        bool ballista = cubeDamageEvent.Damage.Damager.name.Contains("Ballista");
                         if (trebuchet || ballista)
                         {
                             cubeDamageEvent.Damage.Amount = 0f;

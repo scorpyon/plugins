@@ -1,16 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using CodeHatch.Engine.Networking;
 using CodeHatch.Common;
-using CodeHatch.Inventory.Blueprints;
-using Oxide.Core;
+using CodeHatch.Networking.Events;
 using CodeHatch.Networking.Events.Entities;
-using CodeHatch.ItemContainer;
-using CodeHatch.UserInterface.Dialogues;
-using CodeHatch.Engine.Events.Prefab;
-using CodeHatch.Blocks.Networking.Events;
+using Oxide.Core;
+using UnityEngine;
 
 namespace Oxide.Plugins
 {
@@ -18,6 +12,8 @@ namespace Oxide.Plugins
     public class WarpShrine : ReignOfKingsPlugin
     {
         #region SERVER VARIABLES (MODIFIABLE)
+        
+
         #endregion
 
         #region Save and Load Data Methods
@@ -25,7 +21,7 @@ namespace Oxide.Plugins
         // SAVE DATA ===============================================================================================
         private void LoadWarpData()
         {
-            _warpList = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<int, double[]>>("SavedWarpLocations");
+            _warpList = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string, float[]>>("SavedWarpLocations");
         }
 
         private void SaveWarpData()
@@ -48,12 +44,19 @@ namespace Oxide.Plugins
 
         #region SERVER VARIABLES (DO NOT MODIFY)
 
-        // ID = Location ID; Double[] coordinates (x, z)
-        private Dictionary<int, double[]> _warpList = new Dictionary<int, double[]>();
+        // ID = Location ID; float[] coordinates (x, z)
+        private Dictionary<string, float[]> _warpList = new Dictionary<string, float[]>();
 
         #endregion
 
         #region PLAYER COMMANDS
+
+        // Add current location to the warp list
+        [ChatCommand("addlocation")]
+        private void AddMyLocation(Player player, string cmd, string[] input)
+        {
+            AddThisLocationToWarpList(player, cmd, input);
+        }
 
         // Get current location
         [ChatCommand("location")]
@@ -64,9 +67,9 @@ namespace Oxide.Plugins
 
         // Get current location
         [ChatCommand("warp")]
-        private void CommenceWarpSpeed(Player player, string cmd)
+        private void CommenceWarpSpeed(Player player, string cmd, string[] input)
         {
-            WarpPlayerToShrine(player, cmd);
+            WarpPlayerToShrine(player, cmd, input);
         }
 
         #endregion
@@ -74,6 +77,32 @@ namespace Oxide.Plugins
 #region PRIVATE METHODS
 
         #region LOCATION
+
+        private void AddThisLocationToWarpList(Player player, string cmd, string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can add warp locations.");
+                return;
+            }
+
+            if (input.Length < 1)
+            {
+                PrintToChat(player, "Usage: /addlocation <Name>");
+                return;
+            }
+
+            var locName = input.JoinToString(" ");
+
+            if (_warpList.ContainsKey(locName.ToLower()))
+            {
+                PrintToChat(player, "A warp location with that name already exists!");
+                return;
+            }
+
+            _warpList.Add(locName, new float[] { player.Entity.Position.x, player.Entity.Position.y, player.Entity.Position.z });
+            PrintToChat(player, "The warp location has been added to the lisp of warp areas.");
+        }
 
         private void GetCurrentLocation(Player player, string cmd)
         {
@@ -85,11 +114,19 @@ namespace Oxide.Plugins
             PrintToChat(player, string.Format("Current Location: x:{0} y:{1} z:{2}", player.Entity.Position.x.ToString(), player.Entity.Position.y.ToString(), player.Entity.Position.z.ToString()));
         }
 
-        private void WarpPlayerToShrine(Player player, string cmd)
+        private void WarpPlayerToShrine(Player player, string cmd, string[] input)
         {
-            PrintToChat(player.Id.ToString()); 
- //           player.Entity.Position = new Vector(player.Entity.Position.x + 15, player.Entity.Position.y, player.Entity.Position.z);
-//            player.Entity.Position.x = player.Entity.Position.x + 15;
+            var locName = input.JoinToString(" ");
+            if (!_warpList.ContainsKey(locName)) return;
+
+            var locCoords = _warpList[locName];
+            var posX = locCoords[0];
+            var posY = locCoords[1];
+            var posZ = locCoords[2];
+
+            var newPos = new Vector3(posX,posY,posZ);
+            EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, newPos));
+
         }
 
         #endregion
