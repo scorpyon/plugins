@@ -66,6 +66,7 @@
     <Compile Include="CrestAttacking.cs" />
     <Compile Include="DailyHelper.cs" />
     <Compile Include="Emotes.cs" />
+    <Compile Include="GrandExchange.cs" />
     <Compile Include="GuildInfo.cs" />
     <Compile Include="Guildname.cs" />
     <Compile Include="InstantTransmission.cs" />

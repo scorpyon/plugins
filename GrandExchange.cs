@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using CodeHatch.Damaging;
 using CodeHatch.Engine.Networking;
 using CodeHatch.Common;
 using CodeHatch.Inventory.Blueprints;
@@ -14,7 +15,7 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("Grand Exchange", "Scorpyon", "1.3.1")]
+    [Info("Grand Exchange", "Scorpyon", "1.3.2")]
     public class GrandExchange : ReignOfKingsPlugin
     {
         #region MODIFIABLE VARIABLES (For server admin)
@@ -2342,19 +2343,25 @@ namespace Oxide.Plugins
 
         private bool CanRemoveGold(Player player, int amount)
         {
-            var playerName = player.Name.ToLower();
             var currentGold = _playerWallet[player.Id];
             if (currentGold - amount < 0) return false;
             return true;
         }
-
+        
         private void RemoveGold(Player player, int amount)
         {
-            var playerName = player.Name.ToLower();
             var currentGold = _playerWallet[player.Id];
             currentGold = currentGold - amount;
 
             _playerWallet[player.Id] = currentGold;
+        }
+        
+        private void RemoveGold(ulong playerId, int amount)
+        {
+            var currentGold = _playerWallet[playerId];
+            currentGold = currentGold - amount;
+
+            _playerWallet[playerId] = currentGold;
         }
 		
         private void TogglePvpGoldStealing(Player player, string cmd)
@@ -2498,6 +2505,7 @@ namespace Oxide.Plugins
 		private void OnEntityDeath(EntityDeathEvent deathEvent)
 		{
 		    if (deathEvent.Entity == null) return;
+			if(deathEvent.Entity.Owner == null) return;
 			if(deathEvent.Entity.Owner.Name == "server") return;
 			
 			if(_allowPvpGold)
@@ -2518,6 +2526,12 @@ namespace Oxide.Plugins
                     var killer = deathEvent.KillingDamage.DamageSource.Owner;
 					var player = deathEvent.Entity.Owner;
 
+				    if (player.Id == 0 || killer.Id == 0)
+				    {
+				        Log("Player or Killer had no id!!");
+				        return;
+				    }
+
 				    if (player == null)
 				    {
                         Log("player variable was null here.");
@@ -2532,14 +2546,15 @@ namespace Oxide.Plugins
 					// Make sure player didn't kill themselves
 					if(player == killer) return;
 					
+					if (player.GetGuild() == null || killer.GetGuild() == null)
+					{
+                        Log("The player or the killer guild was null here.");
+					    return;
+					}
+
 					// Make sure the player is not in the same guild
 					if(player.GetGuild().Name == killer.GetGuild().Name)
 					{
-					    if (player.GetGuild() == null || killer.GetGuild() == null)
-					    {
-                            Log("The player or the killer guild was null here.");
-					        return;
-					    }
 						PrintToChat(player, "[FF0000]Grand Exchange[FFFFFF] : There is no honour - or more importantly, gold! - in killing a member of your own guild!");
 						return;
 					}
@@ -2564,12 +2579,12 @@ namespace Oxide.Plugins
 						
 						if(goldAmount == 0)
 						{
-							PrintToChat(killer, "[FF00FF]" + player.DisplayName + "[FFFFFF] had no gold for you to steal!");
+							PrintToChat(killer, "[FF00FF]" + player.Name + "[FFFFFF] had no gold for you to steal!");
 						}
 						else
 						{
 							// Notify everyone
-							PrintToChat("[FF00FF]" + killer.DisplayName + "[FFFFFF] has stolen [00FF00]" + goldAmount.ToString() + "[FFFF00] gold [FFFFFF] from the dead body of [00FF00]" + player.DisplayName + "[FFFFFF]!");
+							PrintToChat("[FF00FF]" + killer.Name + "[FFFFFF] has stolen [00FF00]" + goldAmount.ToString() + "[FFFF00] gold [FFFFFF] from the dead body of [00FF00]" + player.Name + "[FFFFFF]!");
 						}
 						
 					}
@@ -2583,6 +2598,12 @@ namespace Oxide.Plugins
 		
 		private void OnEntityHealthChange(EntityDamageEvent damageEvent) 
 		{
+		    if (damageEvent.Entity == null)
+		    {
+                Log("damageEvent.Entity was null!");
+		        return;
+		    }
+
 			if(_allowPveGold)
 			{
 				if (!damageEvent.Entity.IsPlayer)
@@ -2594,7 +2615,23 @@ namespace Oxide.Plugins
                     if (h.ToString().Contains("Ballista")) return;
 
 					if (!h.IsDead) return;
-					
+
+				    if (damageEvent.Damage == null)
+				    {
+				        Log("Damage was null here!");
+                        return;
+				    }
+				    if (damageEvent.Damage.DamageSource == null)
+				    {
+				        Log("DamageSource was null here!");
+                        return;
+				    }
+				    if (damageEvent.Damage.DamageSource.Owner == null)
+				    {
+				        Log("damageEvent.Damage.DamageSource.Owner WAS NULL HERE!");
+                        return;
+				    }
+
 					var hunter = damageEvent.Damage.DamageSource.Owner;
 					
 					// Give the rewards to the player
@@ -2611,11 +2648,16 @@ namespace Oxide.Plugins
 			{
 				if(_tradeAreaIsSafe)
 				{
+				    if (damageEvent.Damage.DamageSource.Owner == null)
+				    {
+				        Log("damageEvent.Damage.DamageSource.Owner WAS NULL IN THE TRADE AREA SECTION!");
+                        return;
+				    }
 					if(PlayerIsInTheRightTradeArea(damageEvent.Damage.DamageSource.Owner))
 					{
 						if(damageEvent.Damage.DamageSource.IsPlayer && damageEvent.Entity != damageEvent.Damage.DamageSource)
 						{
-							damageEvent.Damage.Amount = 0;
+							damageEvent.Damage.Amount = 0f;
 							PrintToChat(damageEvent.Damage.DamageSource.Owner, "[FF0000]Grand Exchange[FFFFFF] : You cannot attack people in a designated trade area, scoundrel!");
 						}
 					}

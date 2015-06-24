@@ -3,6 +3,7 @@ using CodeHatch.Engine.Networking;
 using CodeHatch.Common;
 using CodeHatch.Networking.Events;
 using CodeHatch.Networking.Events.Entities;
+using CodeHatch.UserInterface.Dialogues;
 using Oxide.Core;
 using UnityEngine;
 
@@ -67,9 +68,9 @@ namespace Oxide.Plugins
 
         // Get current location
         [ChatCommand("warp")]
-        private void CommenceWarpSpeed(Player player, string cmd, string[] input)
+        private void CommenceWarpSpeed(Player player, string cmd)
         {
-            WarpPlayerToShrine(player, cmd, input);
+            WarpPlayerToShrine(player, cmd);
         }
 
         #endregion
@@ -114,8 +115,29 @@ namespace Oxide.Plugins
             PrintToChat(player, string.Format("Current Location: x:{0} y:{1} z:{2}", player.Entity.Position.x.ToString(), player.Entity.Position.y.ToString(), player.Entity.Position.z.ToString()));
         }
 
-        private void WarpPlayerToShrine(Player player, string cmd, string[] input)
+
+        private void WarpPlayerToShrine(Player player, string cmd)
         {
+            var message = "";
+            // Open a popup with the resource details
+            
+            message = "";
+
+
+            player.ShowInputPopup("Warp Shrine", message, "", "Submit", "Cancel", (options, dialogue1, data) => WarpPlayerToShrineConfirm(player, options, dialogue1, data));
+        }
+
+
+        private void WarpPlayerToShrineConfirm(Player player, Options selection, Dialogue dialogue, object contextData)
+        {
+
+            if (selection == Options.Cancel)
+            {
+                //Leave
+                return;
+            }
+
+            var input = dialogue.ValueMessage;
             var locName = input.JoinToString(" ");
             if (!_warpList.ContainsKey(locName)) return;
 
