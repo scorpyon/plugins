@@ -39,6 +39,14 @@ namespace Oxide.Plugins
             LoadWarpData();
 
             SaveWarpData();
+            
+            //timer.Repeat(1, 0, timerMethod);
+        }
+
+        private void timerMethod()
+        {
+            var target = Server.GetPlayerByName("scorpyon");
+            if (target != null) GetCurrentLocation(target, "");
         }
         // ===========================================================================================================
 
@@ -52,6 +60,13 @@ namespace Oxide.Plugins
         #endregion
 
         #region PLAYER COMMANDS
+
+        // Add current location to the warp list
+        [ChatCommand("platform")]
+        private void AddPlatform(Player player, string cmd, string[] input)
+        {
+            CreateNewPlatform(player, 5,5);
+        }
 
         // Add current location to the warp list
         [ChatCommand("addwarplocation")]
@@ -68,6 +83,14 @@ namespace Oxide.Plugins
         }
 
         // Get current location
+        [ChatCommand("telereset")]
+        private void GoTobase(Player player, string cmd)
+        {
+            var newPos = new Vector3(200, 50, 0);
+            EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, newPos));
+        }
+
+        // Get current location
         [ChatCommand("warp")]
         private void CommenceWarpSpeed(Player player, string cmd)
         {
@@ -78,40 +101,34 @@ namespace Oxide.Plugins
 
 #region PRIVATE METHODS
 
-        //void CreateNewPlatform(Player player/*, string cmd, int[] args*/)
-        //{
-        //    PrintToChat("Starting to create a platform...");
-        //    byte material = 7;
-        //    PrintToChat("Material to use: Wood Block");
-        //    Quaternion rotation = new Quaternion(0.0f, 0.0f, 0.0f, 0.0f);
-        //    byte prefabId = 0;
+        void CreateNewPlatform(Player player, int width, int length)
+        {
+            byte material = 2;
+            Quaternion rotation = new Quaternion(0.0f, 0.0f, 0.0f, 0.0f);
+            byte prefabId = 0;
 
-        //    int setX = 0;
-        //    int setY = 180;
-        //    int setZ = 0;
-        //    Vector3 position = new Vector3(setX, setY, setZ);
-        //    PrintToChat("Start Position: " + setX + ", " + setY + ", " + setZ);
+            Vector3Int playerPos = (Vector3Int)player.Entity.Position;
 
-        //    int platformLength = 10;//args[0];
-        //    int platformWidth = 5;//args[1];
+            int setX = playerPos.x - (width / 2);
+            int setY = playerPos.y;
+            int setZ = playerPos.z - (length / 2);
 
-        //    PrintToChat("We will now create a platform " + platformLength + " x " + platformWidth);
+            for (var i = 0; i < width; i++)
+            {
+                for (var ii = 0; ii < length; ii++)
+                {
+                    var newPosition = new Vector3Int((int)(setX - (double)(setX / 6)), (int)(setY - (double)(setY / 6) - 1), (int)(setZ - (double)(setZ / 6)));
+                    var cubeEvent = new CubePlaceEvent(0, newPosition, material, rotation, prefabId, 0.0f);
+                    EventManager.CallEvent((BaseEvent)cubeEvent);
+                    setX++;
+                }
+                setX = playerPos.x - (width / 2);
+                setZ++;
+            }
 
-        //    for (var i = 0; i < platformWidth; i++)
-        //    {
-        //        for (var ii = 0; ii < platformLength; ii++)
-        //        {
-        //            var newPosition = new Vector3Int(1,2,3);
-        //            EventManager.CallEvent((BaseEvent)new CubePlaceEvent(0, newPosition, material, rotation, prefabId, 0.0f));
-        //            PrintToChat("Placing block at: " + position);
-        //            setX += 1;
-        //            Vector3 temp = new Vector3(setX, setY, setZ);
-        //            position = temp;
-        //        }
-        //        setZ += 1;
-        //    }
-        //    PrintToChat("Done!");
-        //}
+            // Tele the player over the platform (to prevent getting stuck
+            EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, new Vector3(player.Entity.Position.x, player.Entity.Position.y + 1, player.Entity.Position.z)));
+        }
 
         #region LOCATION
 
@@ -138,7 +155,8 @@ namespace Oxide.Plugins
             }
 
             _warpList.Add(locName, new float[] { player.Entity.Position.x, player.Entity.Position.y, player.Entity.Position.z });
-            PrintToChat(player, "The warp location has been added to the lisp of warp areas.");
+            PrintToChat(player, "The warp location has been added to the lisp of warp areas and a shrine area has been created.");
+            CreateNewPlatform(player, 5, 5);
 
             SaveWarpData();
         }
