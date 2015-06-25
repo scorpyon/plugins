@@ -141,8 +141,6 @@ namespace Oxide.Plugins
 
             Vector3Int playerPos = (Vector3Int)startPosition;
             EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, playerPos));
-            PrintToChat(playerPos.ToString());
-            PrintToChat(player.Entity.Position.x + " " + player.Entity.Position.y + " " + player.Entity.Position.z);
 
             int setX = playerPos.x - (width / 2);
             setX = (int) (setX - (double) (setX/6));
@@ -165,9 +163,7 @@ namespace Oxide.Plugins
                 setX = originX;
                 setZ++;
             }
-            //setX = playerPos.x;
-            //setY++;
-            //setZ = playerPos.z;
+
             originX = originX + (width / 2);
             originZ = originZ + (length / 2);
 
