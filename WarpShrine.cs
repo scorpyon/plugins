@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using CodeHatch.Blocks.Networking.Events;
+using CodeHatch.Blocks.Networking.Events.Local;
 using CodeHatch.Engine.Networking;
 using CodeHatch.Common;
 using CodeHatch.Networking.Events;
@@ -15,7 +17,8 @@ namespace Oxide.Plugins
     public class WarpShrine : ReignOfKingsPlugin
     {
         #region SERVER VARIABLES (MODIFIABLE)
-        
+
+        private const int _warpCoolDownTime = 300; // Time taken until warp can be used again (in seconds)
 
         #endregion
 
@@ -25,11 +28,13 @@ namespace Oxide.Plugins
         private void LoadWarpData()
         {
             _warpList = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string, float[]>>("SavedWarpLocations");
+            _warpCoolDown = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<ulong, int>>("SavedWarpCoolDown");
         }
 
         private void SaveWarpData()
         {
             Interface.GetMod().DataFileSystem.WriteObject("SavedWarpLocations", _warpList);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedWarpCoolDown", _warpCoolDown);
         }
 
 
@@ -37,17 +42,35 @@ namespace Oxide.Plugins
         void Loaded()
         {
             LoadWarpData();
-
             SaveWarpData();
-            
-            //timer.Repeat(1, 0, timerMethod);
+            timer.Repeat(1, 0, WarpShrineTimer);
         }
 
-        private void timerMethod()
+        private void WarpShrineTimer()
         {
-            var target = Server.GetPlayerByName("scorpyon");
-            if (target != null) GetCurrentLocation(target, "");
+            //Cooldown timer
+            var updateList = new Collection<ulong>();
+            foreach (var person in _warpCoolDown)
+            {
+                updateList.Add(person.Key);
+            }
+
+            foreach (var playerId in updateList)
+            {
+                var currentTime = _warpCoolDown[playerId];
+                currentTime--;
+                _warpCoolDown[playerId] = currentTime;
+                if(currentTime <= 0) _warpCoolDown.Remove(playerId);
+            }
+            
         }
+
+        private bool WarpCoolDownExistsFor(Player player)
+        {
+            if (_warpCoolDown.ContainsKey(player.Id)) return true;
+            return false;
+        }
+
         // ===========================================================================================================
 
         #endregion
@@ -56,6 +79,7 @@ namespace Oxide.Plugins
 
         // ID = Location ID; float[] coordinates (x, z)
         private Dictionary<string, float[]> _warpList = new Dictionary<string, float[]>();
+        private Dictionary<ulong, int> _warpCoolDown = new Dictionary<ulong, int>();
 
         #endregion
 
@@ -94,6 +118,14 @@ namespace Oxide.Plugins
         [ChatCommand("warp")]
         private void CommenceWarpSpeed(Player player, string cmd)
         {
+            if (WarpCoolDownExistsFor(player))
+            {
+                if (_warpCoolDown[player.Id] > 0)
+                {
+                    PrintToChat(player,"The Warp Core System is currently cooling down. Please try again later.");
+                    return;
+                }
+            }
             WarpPlayerToShrine(player, cmd);
         }
 
@@ -119,7 +151,9 @@ namespace Oxide.Plugins
                 {
                     var newPosition = new Vector3Int((int)(setX - (double)(setX / 6)), (int)(setY - (double)(setY / 6) - 1), (int)(setZ - (double)(setZ / 6)));
                     var cubeEvent = new CubePlaceEvent(0, newPosition, material, rotation, prefabId, 0.0f);
+                    var localCubeEvent = new CubePlaceLocalEvent(cubeEvent, true);
                     EventManager.CallEvent((BaseEvent)cubeEvent);
+                    EventManager.CallEvent((BaseEvent)localCubeEvent);
                     setX++;
                 }
                 setX = playerPos.x - (width / 2);
@@ -128,7 +162,9 @@ namespace Oxide.Plugins
 
             // Tele the player over the platform (to prevent getting stuck
             EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, new Vector3(player.Entity.Position.x, player.Entity.Position.y + 1, player.Entity.Position.z)));
+
         }
+
 
         #region LOCATION
 
@@ -249,6 +285,13 @@ namespace Oxide.Plugins
             EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, newPos));
 //            EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, Lerp(player.Entity.Position, newPos)));
 
+            // Set the warp cool down timer
+            if (!WarpCoolDownExistsFor(player))
+            {
+                _warpCoolDown.Add(player.Id, _warpCoolDownTime);
+            }
+
+            SaveWarpData();
         }
 
         #endregion
