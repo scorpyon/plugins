@@ -25,7 +25,7 @@ namespace Oxide.Plugins
 		private const int PriceDeflationTime = 3600; // This dictates the number of seconds for each tick which brings the prices back towards their original values
 // (DEPRECATED)		private const int goldRewardForPvp = 10000; // This is the maximum amount of gold that can be stolen from a player for killing them.
         private const int GoldStealPercentage = 20; // This is the maximum percentage of gold that can be stolen from a player
-		private const int GoldRewardForPve = 100; // This is the maximum amount rewarded to a player for killing monsters, etc. (When harvesting the dead body)
+		private const int GoldRewardForPve = 20; // This is the maximum amount rewarded to a player for killing monsters, etc. (When harvesting the dead body)
 		private bool _allowPvpGold = true; // Turns on/off gold for PVP
 		private bool _allowPveGold = true; // Turns on/off gold for PVE
 		private bool _tradeAreaIsSafe; // Determines whether the marked safe area is Safe against being attacked / PvP
@@ -205,6 +205,7 @@ namespace Oxide.Plugins
                 new [] {"Stone Stairs", "3090000", "1000"},
                 new [] {"Stone Sword", "1250000", "1"},
                 new [] {"Stone Wood Cutters Axe", "900000", "1"},
+                new [] {"Tabard", "1000000", "1"},
                 new [] {"Tears Of The Gods", "5000000", "10"},
                 new [] {"Thatch Block", "50000", "1000"},
                 new [] {"Thatch Ramp", "50000", "1000"},
@@ -2076,7 +2077,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            if (input.Length < 3)
+            if (input.Length < 2)
             {
                 PrintToChat(player, "Usage: Type /setprice \"Resource Name\" <amount>");
                 return;
