@@ -15,9 +15,9 @@ send items to player by steamid
 $rok_url = "http://reign-of-kings.net/api/?object=servers&element=voters&key=". $api_key_rok ."&format=xml";
 $steam_url ="http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=". $api_key_steam ."&steamids=". $player_steamid ."&format=xml";
 
-$db_username = "ph90_su";
-$db_password = "Bwvoiogf1";
-$db_schema = "ph90_rok";
+$db_username = "scorpyon";
+$db_password = "nadene00";
+$db_schema = "rokdata";
 $conn = new PDO('mysql:host=localhost;dbname='.$db_schema, $db_username, $db_password);
 
 // Do some cool shit);

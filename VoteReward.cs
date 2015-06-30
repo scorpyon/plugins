@@ -25,7 +25,7 @@ namespace Oxide.Plugins
             
             var playerId = player.Id;
 
-            timer.Once(30, () => webRequests.EnqueueGet("http://cyberscene.co.za/rok-api.php?steamid=" + playerId + "&api=" + rokDotNet_api, (code, response) => WebRequestCallback(code, response, player), this));
+            timer.Once(30, () => webRequests.EnqueueGet("http://www.dannyjeffery.com/rok-api.php?steamid=" + playerId + "&api=" + rokDotNet_api, (code, response) => WebRequestCallback(code, response, player), this));
 
         }
         void WebRequestCallback(int code, string response, Player player)
@@ -35,7 +35,7 @@ namespace Oxide.Plugins
 
             if (response == null || code != 200)
             {
-                Puts("Couldn't get an answer from Cyberscene for " + playerName);
+                Puts("Couldn't get an answer from www.dannyjeffery.com for " + playerName);
                 return;
             }
 
