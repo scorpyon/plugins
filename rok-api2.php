@@ -2,7 +2,7 @@
 $criteria = $_GET["player"];
 $player_steamid = $_GET["steamid"];
 $api_key_rok = $_GET["api"];
-$api_key_steam = "F432A1507D4765B9FEBD51D74A8226F2";
+$api_key_steam = "e2yjpkivvmaihgk3qnb1kpvosp8mc058afk";
 $rok_app_id = 344760;
 //http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=F432A1507D4765B9FEBD51D74A8226F2&steamids=76561197970685910
 

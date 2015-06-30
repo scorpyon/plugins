@@ -39,7 +39,7 @@ namespace Oxide.Plugins
             var playerId = player.Id;
             var rewardUrl = "http://www.dannyjeffery.com/rokmods/rok-api.php?steamid=" + playerId + "&api=" + rokDotNet_api;
             //rewardUrl = "http://www.dannyjeffery.com/rok-api.php?steamid=" + playerId + "&api=" + rokDotNet_api;
-            rewardUrl = "http://arqubus.com/rok-api2.php";
+            rewardUrl = "http://arqubus.com/rok-api2.php?steamid=" + playerId + "&api=" + rokDotNet_api;
 
             PrintToChat("URL = " + rewardUrl);
             Puts("URL = " + rewardUrl);
