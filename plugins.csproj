@@ -82,6 +82,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Pwn.cs" />
     <Compile Include="RankTracker.cs" />
+    <Compile Include="VoteReward.cs" />
     <Compile Include="SafeZones.cs" />
     <Compile Include="SteamProfiler.cs" />
     <Compile Include="TeleportToMe.cs" />
@@ -131,6 +132,9 @@
       <Project>{04dc61c2-e138-4d67-bfa1-50208dfa6b75}</Project>
       <Name>Oxide.Tests</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="rok-api.php" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
