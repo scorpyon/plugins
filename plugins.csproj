@@ -85,7 +85,6 @@
     <Compile Include="SafeZones.cs" />
     <Compile Include="SteamProfiler.cs" />
     <Compile Include="TeleportToMe.cs" />
-    <Compile Include="TradeTracker.cs" />
     <Compile Include="VoteHelper.cs" />
     <Compile Include="WarpShrine.cs" />
     <Compile Include="WarTime.cs" />
