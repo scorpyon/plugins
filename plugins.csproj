@@ -74,6 +74,7 @@
     <Compile Include="KilledBy.cs" />
     <Compile Include="Kits.cs" />
     <Compile Include="Logs.cs" />
+    <Compile Include="MultiCrest.cs" />
     <Compile Include="NightKillOnly.cs" />
     <Compile Include="NoFriendlyFire.cs" />
     <Compile Include="Ooc.cs" />
