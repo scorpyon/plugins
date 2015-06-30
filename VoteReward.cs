@@ -5,17 +5,15 @@ using CodeHatch.Engine.Networking;
 using CodeHatch.Common;
 using CodeHatch.ItemContainer;
 
-using UnityEngine;
-
 namespace Oxide.Plugins
 {
 
-    [Info("ROKChecker", "Pho3niX90", "1.0.1")]
-    class ROKdotNETChecker : ReignOfKingsPlugin
+    [Info("Vote Reward", "Scorpyon", "1.0.1")]
+    class VoteReward : ReignOfKingsPlugin
     {
         //VARS for game usage
         string resource = "STONE"; //resource to give
-        string rokDotNet_api = ""; //this is your reign-of-kings.net server api found http://reign-of-kings.net/servers/manage/
+        string rokDotNet_api = "e2yjpkivvmaihgk3qnb1kpvosp8mc058afk"; //this is your reign-of-kings.net server api found http://reign-of-kings.net/servers/manage/
         int amount = 1000; // this gets rewarded for every vote
         string rewardInterval = "daily"; //This isn't in use yet
 
