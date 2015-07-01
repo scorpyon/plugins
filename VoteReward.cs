@@ -37,6 +37,7 @@ namespace Oxide.Plugins
             WebRequests webRequests = Interface.GetMod().GetLibrary<WebRequests>("WebRequests");
 
             var playerId = player.Id;
+            PrintToChat(player.Id.ToString());
             var rewardUrl = "http://www.dannyjeffery.com/rokmods/rok-api.php?steamid=" + playerId + "&api=" + rokDotNet_api;
             //rewardUrl = "http://www.dannyjeffery.com/rok-api.php?steamid=" + playerId + "&api=" + rokDotNet_api;
             rewardUrl = "http://arqubus.com/rok-api2.php";
