@@ -8,7 +8,7 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("WarTracker", "Scorpyon", "1.1.4")]
+    [Info("WarTracker", "Scorpyon", "1.1.5")]
     public class WarTracker : ReignOfKingsPlugin
     {
 #region MODIFIABLE VARIABLES
@@ -422,85 +422,85 @@ namespace Oxide.Plugins
 
 #region ENTITY HEALTH CHANGE AND DEATH
 
-        // PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
-        private void OnEntityHealthChange(EntityDamageEvent damageEvent)
-        {
-            //PrintToChat("Damage detected");
-            if (damageEvent.Damage.Amount < 0) return;
-            if (_noPeaceKilling)
-            {
-                //PrintToChat("Checking if allowed...");
-                if (
-                    damageEvent.Damage.Amount > 0 // taking damage
-                    && damageEvent.Entity.IsPlayer // entity taking damage is player
-                    && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
-                    && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
-                    && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
-                    )
-                {
-                    //PrintToChat("Cancelling Damage");
-                    damageEvent.Damage.Amount = 0f;
-                    //PrintToChat("Damage amount - " + damageEvent.Damage.Amount);
-                    damageEvent.Cancel("Can Only Kill When At War");
-                    PrintToChat(damageEvent.Damage.DamageSource.Owner,
-                        "[FF0000]War General : [FFFFFF]You cannot attack another person when you are not at war with them!");
-                }
-            }
-            if (_noCrestKilling)
-            {
-                // Make sure it's not a player with a clever name! 
-                if (!damageEvent.Entity.IsPlayer)
-                {
-                    if (damageEvent.Entity.name.Contains("Crest"))
-                    {
-                        damageEvent.Cancel("Can Only Break Crests When At War");
-                        damageEvent.Damage.Amount = 0f;
-                        PrintToChat(damageEvent.Damage.DamageSource.Owner,
-                            "[FF0000]War General : [FFFFFF]You cannot break another guild's crest when you are not at war with them!");
-                    }
-                }
-            }
-        }
+        //// PREVENTS ALL PLAYER DAMAGE WHEN GUILDS ARE NOT AT WAR
+        //private void OnEntityHealthChange(EntityDamageEvent damageEvent)
+        //{
+        //    //PrintToChat("Damage detected");
+        //    if (damageEvent.Damage.Amount < 0) return;
+        //    if (_noPeaceKilling)
+        //    {
+        //        //PrintToChat("Checking if allowed...");
+        //        if (
+        //            damageEvent.Damage.Amount > 0 // taking damage
+        //            && damageEvent.Entity.IsPlayer // entity taking damage is player
+        //            && damageEvent.Damage.DamageSource.IsPlayer // entity delivering damage is a player
+        //            && damageEvent.Entity != damageEvent.Damage.DamageSource // entity taking damage is not taking damage from self
+        //            && !GuildsAreAtWar(damageEvent) // The guilds are not currently at war
+        //            )
+        //        {
+        //            //PrintToChat("Cancelling Damage");
+        //            damageEvent.Damage.Amount = 0f;
+        //            //PrintToChat("Damage amount - " + damageEvent.Damage.Amount);
+        //            damageEvent.Cancel("Can Only Kill When At War");
+        //            PrintToChat(damageEvent.Damage.DamageSource.Owner,
+        //                "[FF0000]War General : [FFFFFF]You cannot attack another person when you are not at war with them!");
+        //        }
+        //    }
+        //    if (_noCrestKilling)
+        //    {
+        //        // Make sure it's not a player with a clever name! 
+        //        if (!damageEvent.Entity.IsPlayer)
+        //        {
+        //            if (damageEvent.Entity.name.Contains("Crest"))
+        //            {
+        //                damageEvent.Cancel("Can Only Break Crests When At War");
+        //                damageEvent.Damage.Amount = 0f;
+        //                PrintToChat(damageEvent.Damage.DamageSource.Owner,
+        //                    "[FF0000]War General : [FFFFFF]You cannot break another guild's crest when you are not at war with them!");
+        //            }
+        //        }
+        //    }
+        //}
 
-        private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
-        {
-            if (_noBaseKilling)
-            {
-				var player = cubeDamageEvent.Damage.DamageSource.Owner;
-				var isAtWar = false;
+        //private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
+        //{
+        //    if (_noBaseKilling)
+        //    {
+        //        var player = cubeDamageEvent.Damage.DamageSource.Owner;
+        //        var isAtWar = false;
 				
-                // CHeck if the guilds are at war
-				foreach(var war in WarList)
-				{
-					if(war[1].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower() || war[2].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower())
-					{
-						isAtWar = true;
-					}
-				}
+        //        // CHeck if the guilds are at war
+        //        foreach(var war in WarList)
+        //        {
+        //            if(war[1].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower() || war[2].ToLower() == PlayerExtensions.GetGuild(player).DisplayName.ToLower())
+        //            {
+        //                isAtWar = true;
+        //            }
+        //        }
 				
-				if (!isAtWar)
-                {
-                    // IF its a player attacking the base
-                    if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
-                    {
+        //        if (!isAtWar)
+        //        {
+        //            // IF its a player attacking the base
+        //            if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
+        //            {
                         
-                    }
-                    // Or if it's a siege weapon
-                    else if (cubeDamageEvent.Damage.Amount > 50)
-                    {
-                        bool trebuchet = cubeDamageEvent.Damage.Damager.name.Contains("Trebuchet");
-                        bool ballista = cubeDamageEvent.Damage.Damager.name.Contains("Ballista");
-                        if (trebuchet || ballista)
-                        {
-                            cubeDamageEvent.Damage.Amount = 0f;
-                            var message = "[FF0000]War General : [00FF00]" + player.DisplayName + "[FFFFFF]! You cannot attack this base when you are not at war with this guild!";
-                            PrintToChat(message);
-                            Log(message);
-                        }
-                    }
-                }
-            }
-        }
+        //            }
+        //            // Or if it's a siege weapon
+        //            else if (cubeDamageEvent.Damage.Amount > 50)
+        //            {
+        //                bool trebuchet = cubeDamageEvent.Damage.Damager.name.Contains("Trebuchet");
+        //                bool ballista = cubeDamageEvent.Damage.Damager.name.Contains("Ballista");
+        //                if (trebuchet || ballista)
+        //                {
+        //                    cubeDamageEvent.Damage.Amount = 0f;
+        //                    var message = "[FF0000]War General : [00FF00]" + player.DisplayName + "[FFFFFF]! You cannot attack this base when you are not at war with this guild!";
+        //                    PrintToChat(message);
+        //                    Log(message);
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
 #endregion
 		
