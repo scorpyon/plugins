@@ -309,7 +309,7 @@ namespace Oxide.Plugins
             var posY = locCoords[1];
             var posZ = locCoords[2];
 
-            var newPos = new Vector3(posX,posY + 1,posZ);
+            var newPos = new Vector3(posX,posY + 2,posZ);
             EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, newPos));
 //            EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, Lerp(player.Entity.Position, newPos)));
 
