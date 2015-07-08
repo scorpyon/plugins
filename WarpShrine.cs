@@ -13,12 +13,13 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Warp Shrine", "Scorpyon", "1.0.1")]
+    [Info("Warp Shrine", "Scorpyon", "1.0.4")]
     public class WarpShrine : ReignOfKingsPlugin
     {
         #region SERVER VARIABLES (MODIFIABLE)
 
         private const int _warpCoolDownTime = 300; // Time taken until warp can be used again (in seconds)
+        //private const int _warpCoolDownTime = 5; // Time taken until warp can be used again (in seconds)
 
         #endregion
 
@@ -99,6 +100,13 @@ namespace Oxide.Plugins
             AddThisLocationToWarpList(player, cmd, input);
         }
 
+        // Add current location to the warp list
+        [ChatCommand("removewarplocation")]
+        private void RemoveMyLocation(Player player, string cmd, string[] input)
+        {
+            RemoveThisLocationFromTheWarpList(player, cmd, input);
+        }
+
         //// Get current location
         //[ChatCommand("location")]
         //private void GetMyLocation(Player player, string cmd)
@@ -122,7 +130,7 @@ namespace Oxide.Plugins
             {
                 if (_warpCoolDown[player.Id] > 0)
                 {
-                    PrintToChat(player,"The Warp Core System is currently cooling down. Please try again later.");
+                    PrintToChat(player, "The Warp Core System is currently cooling down. Please try again after " + _warpCoolDown[player.Id] + " seconds.");
                     return;
                 }
             }
@@ -195,6 +203,33 @@ namespace Oxide.Plugins
         }
 
         #region LOCATION
+
+        private void RemoveThisLocationFromTheWarpList(Player player, string cmd, string[] input)
+        {
+            if (!player.HasPermission("admin"))
+            {
+                PrintToChat(player, "Only admins can add warp locations.");
+                return;
+            }
+
+            if (input.Length < 1)
+            {
+                PrintToChat(player, "Usage: /addlocation <Name>");
+                return;
+            }
+
+            var locName = input.JoinToString(" ").ToLower();
+
+            if (!_warpList.ContainsKey(locName))
+            {
+                PrintToChat(player, "That warp location doesn't appear to exist in the list.");
+                return;
+            }
+            _warpList.Remove(locName);
+            PrintToChat(player, "The warp location: " + locName + "  has been removed from the list of warp destinations.");
+
+            SaveWarpData();
+        }
 
         private void AddThisLocationToWarpList(Player player, string cmd, string[] input)
         {

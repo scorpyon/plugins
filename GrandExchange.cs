@@ -15,7 +15,7 @@ using CodeHatch.Blocks.Networking.Events;
 
 namespace Oxide.Plugins
 {
-    [Info("Grand Exchange", "Scorpyon", "1.3.2")]
+    [Info("Grand Exchange", "Scorpyon", "1.3.4")]
     public class GrandExchange : ReignOfKingsPlugin
     {
         #region MODIFIABLE VARIABLES (For server admin)
@@ -108,7 +108,7 @@ namespace Oxide.Plugins
                 new [] {"Iron Halberd", "10600000", "1"},
                 new [] {"Iron Hatchet", "4125000", "1"},
                 new [] {"Iron Ingot", "1250000", "1000"},
-                new [] {"Iron Javelin", "434000", "1"},
+                new [] {"Iron Javelin", "434000", "50"},
                 new [] {"Iron Pickaxe", "8000000", "1"},
                 new [] {"Iron Plate Boots", "1375000", "1"},
                 new [] {"Iron Plate Gauntlets", "1375000", "1"},
@@ -174,7 +174,7 @@ namespace Oxide.Plugins
                 new [] {"Steel Halberd", "40500000", "1"},
                 new [] {"Steel Hatchet", "15875000", "1"},
                 new [] {"Steel Ingot", "5000000", "1000"},
-                new [] {"Steel Javelin", "1683000", "1"},
+                new [] {"Steel Javelin", "1683000", "50"},
                 new [] {"Steel Morning Star Mace", "30625000", "1"},
                 new [] {"Steel Pickaxe", "30500000", "1"},
                 new [] {"Steel Plate Boots", "5200000", "1"},
@@ -197,7 +197,7 @@ namespace Oxide.Plugins
                 new [] {"Stone Cutter", "100000", "1"},
                 new [] {"Stone Dagger", "250000", "1"},
                 new [] {"Stone Hatchet", "475000", "1"},
-                new [] {"Stone Javelin", "42000", "1"},
+                new [] {"Stone Javelin", "42000", "50"},
                 new [] {"Stone Pickaxe", "1125000", "1"},
                 new [] {"Stone Ramp", "3090000", "1000"},
                 new [] {"Stone Slab", "3040000", "1000"},
@@ -310,6 +310,8 @@ namespace Oxide.Plugins
             _tradeMasters = Interface.GetMod().DataFileSystem.ReadObject<Collection<string>>("SavedTradeMasters");
             _shopMarks = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<string, double[]>>("SavedPlayerShopMarks");
             _shopLocs = Interface.GetMod().DataFileSystem.ReadObject<Dictionary<ulong, double[]>>("SavedPlayerShopLocs");
+            _allowPveGold = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedPvEGoldStatus");
+            _allowPvpGold = Interface.GetMod().DataFileSystem.ReadObject<bool>("SavedPvPGoldStatus");
         }
 
         private void SaveTradeData()
@@ -325,6 +327,8 @@ namespace Oxide.Plugins
             Interface.GetMod().DataFileSystem.WriteObject("SavedTradeMasters", _tradeMasters);
             Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShopMarks", _shopMarks);
             Interface.GetMod().DataFileSystem.WriteObject("SavedPlayerShopLocs", _shopLocs);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedPvEGoldStatus", _allowPveGold);
+            Interface.GetMod().DataFileSystem.WriteObject("SavedPvPGoldStatus", _allowPvpGold);
         }
 		
 		private void OnPlayerConnected(Player player)
@@ -2380,7 +2384,7 @@ namespace Oxide.Plugins
             }
             _allowPvpGold = true;
             PrintToChat(player, "PvP gold stealing is now [00FF00]ON");
-            return;
+            SaveTradeData();
         }
 
         private void TogglePveGoldFarming(Player player, string cmd)
@@ -2398,7 +2402,7 @@ namespace Oxide.Plugins
             }
             _allowPveGold = true;
             PrintToChat(player, "PvP gold farming is now [00FF00]ON");
-            return;
+            SaveTradeData();
         }
 
 
