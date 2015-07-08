@@ -2667,28 +2667,28 @@ namespace Oxide.Plugins
 		}
 
         
-        private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
-        {
-            var player = cubeDamageEvent.Damage.DamageSource.Owner;
+        //private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
+        //{
+        //    var player = cubeDamageEvent.Damage.DamageSource.Owner;
 
-            // If in the GE Area
-            if (PlayerIsInTheRightTradeArea(player))
-            {
-                // IF its a player attacking the base
-                if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
-                {
-                    bool trebuchet = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Trebuchet");
-                    bool ballista = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Ballista");
-                    if (trebuchet || ballista)
-                    {
-                        cubeDamageEvent.Damage.Amount = 0f;
-                    }
-                    var message = "[FF0000]Grand Exchange : [00FF00]" + player.DisplayName + "[FFFFFF]! Attacking the Grand Exchange is ill-advised! Decist immediately!";
-                    //PrintToChat(message);
-                    //Log(message);
-                }
-            }
-        }
+        //    // If in the GE Area
+        //    if (PlayerIsInTheRightTradeArea(player))
+        //    {
+        //        // IF its a player attacking the base
+        //        if (cubeDamageEvent.Damage.Amount > 50 && cubeDamageEvent.Damage.DamageSource.Owner is Player)
+        //        {
+        //            bool trebuchet = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Trebuchet");
+        //            bool ballista = cubeDamageEvent.Damage.Damager.name.ToString().Contains("Ballista");
+        //            if (trebuchet || ballista)
+        //            {
+        //                cubeDamageEvent.Damage.Amount = 0f;
+        //            }
+        //            var message = "[FF0000]Grand Exchange : [00FF00]" + player.DisplayName + "[FFFFFF]! Attacking the Grand Exchange is ill-advised! Decist immediately!";
+        //            //PrintToChat(message);
+        //            //Log(message);
+        //        }
+        //    }
+        //}
         #endregion
 
         #region UTILITY METHODS
