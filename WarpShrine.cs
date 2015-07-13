@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Warp Shrine", "Scorpyon", "1.0.4")]
+    [Info("Warp Shrine", "Scorpyon", "1.0.5")]
     public class WarpShrine : ReignOfKingsPlugin
     {
         #region SERVER VARIABLES (MODIFIABLE)
@@ -148,7 +148,8 @@ namespace Oxide.Plugins
             byte prefabId = 0;
 
             Vector3Int playerPos = (Vector3Int)startPosition;
-            EventManager.CallEvent((BaseEvent)new TeleportEvent(player.Entity, playerPos));
+            var teleEvent = new TeleportEvent(player.Entity, playerPos);
+            EventManager.CallEvent((BaseEvent)teleEvent);
 
             int setX = playerPos.x - (width / 2);
             setX = (int) (setX - (double) (setX/6));
@@ -281,7 +282,7 @@ namespace Oxide.Plugins
 
             if (!InWarpShrineLocation(player))
             {
-                PrintToChat("You are not currently at a Warp Shrine.");
+                PrintToChat(player, "You are not currently at a Warp Shrine.");
                 return;
             }
 
