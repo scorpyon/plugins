@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CodeHatch.Blocks.Networking.Events;
 using CodeHatch.Blocks.Networking.Events.Local;
 using CodeHatch.Engine.Networking;
 using CodeHatch.Common;
+using CodeHatch.ItemContainer;
 using CodeHatch.Networking.Events;
 using CodeHatch.Networking.Events.Entities;
+using CodeHatch.Thrones.Taunts;
 using CodeHatch.UserInterface.Dialogues;
 using Oxide.Core;
 using UnityEngine;
@@ -360,6 +363,75 @@ namespace Oxide.Plugins
 
         #endregion
 
+        #region CUBE DAMAGE
+        private void OnCubeTakeDamage(CubeDamageEvent cubeDamageEvent)
+        {
+            var player = cubeDamageEvent.Damage.DamageSource.Owner;
+            var sourceName = cubeDamageEvent.Damage.Damager.name.ToLower();
+            bool trebuchet = sourceName.Contains("trebuchet");
+            bool ballista = sourceName.Contains("ballista");
+
+            cubeDamageEvent.Damage.Amount = 0f;
+            cubeDamageEvent.Damage.ImpactDamage = 0f;
+            cubeDamageEvent.Damage.MiscDamage = 0f;
+
+            //cubeDamageEvent.Cancel("This area is protected!");
+            PrintToChat(player, "Warning! This area is protected! Such actions will incur a fine!");
+            if (!trebuchet && !ballista)
+            {
+                var inventory = player.GetInventory().Contents;
+                var woodRemoveAmount = 6;
+                var stoneRemoveAmount = 6;
+
+                // Make sure to take the harvested materials back off the player
+                if (CanRemoveResource(player, "Wood", woodRemoveAmount))
+                {
+                    foreach (InvGameItemStack item in inventory.Where(item => item != null))
+                    {
+                        if (item.Name == "Wood" && item.StackAmount >= woodRemoveAmount)
+                        {
+                            inventory.SplitItem(item, woodRemoveAmount, true);
+                            break;
+                        }
+                    }
+                }
+                PrintToChat("trying to remove stone");
+                if (CanRemoveResource(player, "Stone", stoneRemoveAmount))
+                {
+                    PrintToChat("looking for stone");
+                    foreach (InvGameItemStack item in inventory.Where(item => item != null))
+                    {
+                        if (item.Name == "Stone" && item.StackAmount >= stoneRemoveAmount)
+                        {
+                            PrintToChat("stone found");
+                            inventory.SplitItem(item, stoneRemoveAmount, true);
+                            break;
+                        }
+                    }
+                }
+                cubeDamageEvent.Cancel("This area is protected!");
+            }
+        }
+
+        private bool CanRemoveResource(Player player, string resource, int amount)
+        {
+            // Check player's inventory
+            var inventory = player.CurrentCharacter.Entity.GetContainerOfType(CollectionTypes.Inventory);
+
+            // Check how much the player has
+            var foundAmount = 0;
+            foreach (var item in inventory.Contents.Where(item => item != null))
+            {
+                if (item.Name.ToLower() == resource.ToLower())
+                {
+                    foundAmount = foundAmount + item.StackAmount;
+                }
+            }
+
+            if (foundAmount >= amount) return true;
+            return false;
+        }
+        #endregion
 
         #region UTILITY METHODS
         // Capitalise the Starting letters
