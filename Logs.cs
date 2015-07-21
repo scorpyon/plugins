@@ -18,7 +18,7 @@ using CodeHatch.Networking.Events.Social;
 
 namespace Oxide.Plugins
 {
-    [Info("Server Logs", "Sydney", "0.1")]
+    [Info("Server Logs", "Scorpyon", "1.1")]
     public class Logs : ReignOfKingsPlugin
     {
         #region LogSettings
@@ -43,18 +43,18 @@ namespace Oxide.Plugins
             Log("Events", player.DisplayName + " disconnected.");
         }
 
-        private void OnPlayerRespawn(PlayerRespawnEvent e)
-        {
-            if (LogEvents == false) return;
-            string entityPosition = e.Player.Entity.Position.x + "," + e.Player.Entity.Position.y + "," + e.Player.Entity.Position.x;
+        //private void OnPlayerRespawn(PlayerRespawnEvent e)
+        //{
+        //    if (LogEvents == false) return;
+        //    string entityPosition = e.Player.Entity.Position.x + "," + e.Player.Entity.Position.y + "," + e.Player.Entity.Position.x;
 
-            string str = "";
+        //    string str = "";
 
-            str += e.Player.DisplayName + " has respawned at [" + entityPosition + "].";
+        //    str += e.Player.DisplayName + " has respawned at [" + entityPosition + "].";
 
-            Log("Events", str);
+        //    Log("Events", str);
 
-        }
+        //}
 
         private void OnPlayerChat(PlayerEvent e)
         {
@@ -82,53 +82,53 @@ namespace Oxide.Plugins
             
         }
 
-        private void OnEntityHealthChange(EntityDamageEvent e)
-        {
-            if (LogEntities == false) return;
-            string str = "";
-            string entityPosition = e.Entity.Position.x + "," + e.Entity.Position.y + "," + e.Entity.Position.x;
-            if (e.Damage.Amount > 0)
-            {
+        //private void OnEntityHealthChange(EntityDamageEvent e)
+        //{
+        //    if (LogEntities == false) return;
+        //    string str = "";
+        //    string entityPosition = e.Entity.Position.x + "," + e.Entity.Position.y + "," + e.Entity.Position.x;
+        //    if (e.Damage.Amount > 0)
+        //    {
 
-                if (e.Damage.DamageSource.IsPlayer) str += e.Damage.DamageSource.Owner.Name + " has done ";
-                else str += e.Damage.DamageSource.name + " has done ";
+        //        if (e.Damage.DamageSource.IsPlayer) str += e.Damage.DamageSource.Owner.Name + " has done ";
+        //        else str += e.Damage.DamageSource.name + " has done ";
 
-                str += e.Damage.Amount + " [" + e.Damage.DamageTypes + "] damage points to ";
+        //        str += e.Damage.Amount + " [" + e.Damage.DamageTypes + "] damage points to ";
 
-                if (e.Entity.IsPlayer) str += e.Entity.Owner.Name;
-                else if(IsAnimal(e)) str += e.Entity.name;
-                else
-                    str += e.Entity.name;
+        //        if (e.Entity.IsPlayer) str += e.Entity.Owner.Name;
+        //        else if(IsAnimal(e)) str += e.Entity.name;
+        //        else
+        //            str += e.Entity.name;
 
-                str += " with a " + e.Damage.Damager.name + " at [" + entityPosition + "].";
-                if((CrestSpecial == true && e.Entity.name.Contains("Crest")) || (SleeperSpecial == true && e.Entity.name.Contains("Sleep")))
-                {
-                    Log("Special", str);
-                    return;
-                }
-                else Log("Entities", str);
-            }
+        //        str += " with a " + e.Damage.Damager.name + " at [" + entityPosition + "].";
+        //        if((CrestSpecial == true && e.Entity.name.Contains("Crest")) || (SleeperSpecial == true && e.Entity.name.Contains("Sleep")))
+        //        {
+        //            Log("Special", str);
+        //            return;
+        //        }
+        //        else Log("Entities", str);
+        //    }
 
-            if (e.Damage.Amount < 0)
-            {
-                if(e.Entity.IsPlayer)
-                {
-                    str += e.Entity.Owner.Name + " has gained " + (e.Damage.Amount * -1) + " health points.";
+        //    if (e.Damage.Amount < 0)
+        //    {
+        //        if(e.Entity.IsPlayer)
+        //        {
+        //            str += e.Entity.Owner.Name + " has gained " + (e.Damage.Amount * -1) + " health points.";
 
-                    Log("Entities", str);
-                }
-                else
-                {
-                    str += e.Entity.name + " has gained " + (e.Damage.Amount * -1) + " health points";
-                    if (e.Damage.DamageSource.IsPlayer) str += " from " + e.Damage.DamageSource.Owner.Name;
-                    str += ".";
+        //            Log("Entities", str);
+        //        }
+        //        else
+        //        {
+        //            str += e.Entity.name + " has gained " + (e.Damage.Amount * -1) + " health points";
+        //            if (e.Damage.DamageSource.IsPlayer) str += " from " + e.Damage.DamageSource.Owner.Name;
+        //            str += ".";
 
-                    Log("Entities", str);
-                }
+        //            Log("Entities", str);
+        //        }
                 
                 
-            }
-        }
+        //    }
+        //}
 
         private void OnEntityDeath(EntityDeathEvent e)
         {
@@ -140,16 +140,16 @@ namespace Oxide.Plugins
             {
                 if (e.KillingDamage.DamageSource.IsPlayer)
                     str += e.KillingDamage.DamageSource.Owner.Name;
-                else if (IsEntityAnimal(e.KillingDamage.DamageSource))
-                    str += e.KillingDamage.DamageSource.name;
+                //else if (IsEntityAnimal(e.KillingDamage.DamageSource))
+                //    str += e.KillingDamage.DamageSource.name;
                 else if (e.Entity.IsPlayer)
                     str += e.Entity.Owner.DisplayName;
 
 
                 if (e.Entity.IsPlayer && !e.Entity.IsPlayer)
                     str += " has killed " + e.Entity.Owner.Name;
-                else if (IsAnimal(e))
-                    str += " has killed " + e.Entity.name;
+                //else if (IsAnimal(e))
+                //    str += " has killed " + e.Entity.name;
                 else
                     str += " has killed himself";
 
@@ -157,37 +157,37 @@ namespace Oxide.Plugins
 
                 Log("Entities", str);
             }
-            else
-            {
-                if (e.Entity.IsPlayer)
-                    str += e.Entity.Owner.Name + " has died.";
-                else if (IsAnimal(e))
-                    str += e.Entity.name + " has died.";
-                else
-                    str += e.Entity.name + " has been destroyed.";
-                Log("Entities", str);
-            }
+            //else
+            //{
+            //    if (e.Entity.IsPlayer)
+            //        str += e.Entity.Owner.Name + " has died.";
+            //    else if (IsAnimal(e))
+            //        str += e.Entity.name + " has died.";
+            //    else
+            //        str += e.Entity.name + " has been destroyed.";
+            //    Log("Entities", str);
+            //}
         }
 
-        void OnCubePlacement(CubePlaceEvent e)
-        {
-            if (LogCubes == false) return;
-            string cubePosition = e.Position.x + "," + e.Position.y + "," + e.Position.z;
-            string str = "";
+        //void OnCubePlacement(CubePlaceEvent e)
+        //{
+        //    if (LogCubes == false) return;
+        //    string cubePosition = e.Position.x + "," + e.Position.y + "," + e.Position.z;
+        //    string str = "";
 
-            var bp = CodeHatch.Blocks.Inventory.InventoryUtil.GetTilesetBlueprint(e.Material, (int)e.PrefabId);
-            if (bp == null) return;
+        //    var bp = CodeHatch.Blocks.Inventory.InventoryUtil.GetTilesetBlueprint(e.Material, (int)e.PrefabId);
+        //    if (bp == null) return;
 
-            Player Owner = Server.GetPlayerById(e.SenderId);
+        //    Player Owner = Server.GetPlayerById(e.SenderId);
 
-            if (Owner != null)
-                    str += Owner.DisplayName + " has placed a " + bp.Name + "";
-            else str += "A " + bp.Name + " has been placed";
+        //    if (Owner != null)
+        //            str += Owner.DisplayName + " has placed a " + bp.Name + "";
+        //    else str += "A " + bp.Name + " has been placed";
 
-            str += " at [" + cubePosition + "].";
+        //    str += " at [" + cubePosition + "].";
 
-            Log("Cubes", str);
-        }
+        //    Log("Cubes", str);
+        //}
 
         void OnCubeTakeDamage(CubeDamageEvent e)
         {
@@ -213,17 +213,18 @@ namespace Oxide.Plugins
             }
 
         }
-        void OnCubeDestroyed(CubeDestroyEvent e)
-        {
-            if (LogCubes == false) return;
-            string cubePosition = e.Position.x + "," + e.Position.y + "," + e.Position.z;
 
-            string str = "";
+        //void OnCubeDestroyed(CubeDestroyEvent e)
+        //{
+        //    if (LogCubes == false) return;
+        //    string cubePosition = e.Position.x + "," + e.Position.y + "," + e.Position.z;
 
-            str = str + "A cube has been destroyed at [" + cubePosition + "].";
+        //    string str = "";
 
-            Log("Cubes", str);
-        }
+        //    str = str + "A cube has been destroyed at [" + cubePosition + "].";
+
+        //    Log("Cubes", str);
+        //}
 
         void Log(string file, string msg)
         {
@@ -232,14 +233,14 @@ namespace Oxide.Plugins
             LogFileUtil.LogTextToFile("scriptfiles/logs", filepath, text);
         }
 
-        bool IsEntityAnimal(Entity e)
-        {
-            if (e.Has<MonsterEntity>() || e.Has<CritterEntity>()) return true;
-            return false;
-        }
+        //bool IsEntityAnimal(Entity e)
+        //{
+        //    if (e.Has<MonsterEntity>() || e.Has<CritterEntity>()) return true;
+        //    return false;
+        //}
 
-        bool IsAnimal(EntityEvent e) {
-            if (e.Entity.Has<MonsterEntity>() || e.Entity.Has<CritterEntity>()) return true;
-            return false; }
+        //bool IsAnimal(EntityEvent e) {
+        //    if (e.Entity.Has<MonsterEntity>() || e.Entity.Has<CritterEntity>()) return true;
+        //    return false; }
     }
 }
