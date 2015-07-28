@@ -140,16 +140,12 @@ namespace Oxide.Plugins
             {
                 if (e.KillingDamage.DamageSource.IsPlayer)
                     str += e.KillingDamage.DamageSource.Owner.Name;
-                //else if (IsEntityAnimal(e.KillingDamage.DamageSource))
-                //    str += e.KillingDamage.DamageSource.name;
                 else if (e.Entity.IsPlayer)
                     str += e.Entity.Owner.DisplayName;
 
 
-                if (e.Entity.IsPlayer && !e.Entity.IsPlayer)
+                if (e.Entity.IsPlayer)
                     str += " has killed " + e.Entity.Owner.Name;
-                //else if (IsAnimal(e))
-                //    str += " has killed " + e.Entity.name;
                 else
                     str += " has killed himself";
 
@@ -157,19 +153,10 @@ namespace Oxide.Plugins
 
                 Log("Entities", str);
             }
-            //else
-            //{
-            //    if (e.Entity.IsPlayer)
-            //        str += e.Entity.Owner.Name + " has died.";
-            //    else if (IsAnimal(e))
-            //        str += e.Entity.name + " has died.";
-            //    else
-            //        str += e.Entity.name + " has been destroyed.";
-            //    Log("Entities", str);
-            //}
         }
 
-        //void OnCubePlacement(CubePlaceEvent e)
+  
+  //void OnCubePlacement(CubePlaceEvent e)
         //{
         //    if (LogCubes == false) return;
         //    string cubePosition = e.Position.x + "," + e.Position.y + "," + e.Position.z;

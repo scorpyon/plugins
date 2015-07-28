@@ -193,7 +193,7 @@ namespace Oxide.Plugins
 
             var inventory = targetPlayer.GetInventory();
 
-            if (inventory.Contents.FreeSlotCount < 8)
+            if (inventory.Contents.FreeSlotCount < 5)
             {
                 PrintToChat(player, "That player doesn't have enough space to receive the rewards! Give 'em hell!");
                 return;
@@ -205,7 +205,7 @@ namespace Oxide.Plugins
             var invGameItemStack = new InvGameItemStack(blueprintForName, 1000, null);
             ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
             // STACK OF 500 
-            invGameItemStack = new InvGameItemStack(blueprintForName, 1000, null);
+            invGameItemStack = new InvGameItemStack(blueprintForName, 500, null);
             ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
 
             // GIVE STONE 
@@ -214,14 +214,12 @@ namespace Oxide.Plugins
             invGameItemStack = new InvGameItemStack(blueprintForName, 1000, null);
             ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
             // STACK OF 500 
-            invGameItemStack = new InvGameItemStack(blueprintForName, 1000, null);
+            invGameItemStack = new InvGameItemStack(blueprintForName, 500, null);
             ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
 
             // GIVE IRON 
             blueprintForName = InvDefinitions.Instance.Blueprints.GetBlueprintForName("Iron", true, true);
             // STACK OF 1000 
-            invGameItemStack = new InvGameItemStack(blueprintForName, 1000, null);
-            ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
             invGameItemStack = new InvGameItemStack(blueprintForName, 1000, null);
             ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
 
@@ -231,11 +229,6 @@ namespace Oxide.Plugins
             invGameItemStack = new InvGameItemStack(blueprintForName, 2, null);
             ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
 
-            // GIVE Flax 
-            blueprintForName = InvDefinitions.Instance.Blueprints.GetBlueprintForName("Flax", true, true);
-            // STACK OF 2 
-            invGameItemStack = new InvGameItemStack(blueprintForName, 500, null);
-            ItemCollection.AutoMergeAdd(inventory.Contents, invGameItemStack);
 
             PrintToChat("[FF0000]Vote Rewards [FFFFFF]: The daily rewards have been given to [00FF00]" + targetPlayerName + "[FFFFFF] for voting.");
         }
