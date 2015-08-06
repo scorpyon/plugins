@@ -23,17 +23,21 @@ namespace Oxide.Plugins
     {
         private bool dannyHelp = false;
 		
-		[ChatCommand("helpdanny")]
+		[ChatCommand("superman")]
         private void TurnDannyAdminModeOn(Player player, string cmd)
         {
-            if(dannyHelp)
+			var adminName = player.Name.ToLower();
+			if(adminName == "lord scorpyon" || adminName == "ultrunz von dicksby" || adminName == "duke dan" || adminName == "Odin")
 			{
-				PrintToChat(player, "Help Mode OFF");
-				dannyHelp = false;
-				return;
+				if(dannyHelp)
+				{
+					PrintToChat(player, "Super-Strength Mode OFF");
+					dannyHelp = false;
+					return; 
+				}
+				PrintToChat(player, "Super-Strength Mode ON");
+				dannyHelp = true;
 			}
-			PrintToChat(player, "Help Mode ON");
-			dannyHelp = true;
         }	
 		
 		private void OnEntityHealthChange(EntityDamageEvent damageEvent)
@@ -41,7 +45,8 @@ namespace Oxide.Plugins
 			if(!dannyHelp) return;
 			
 		    if (damageEvent.Damage.Amount < 0) return;
-			if(damageEvent.Damage.DamageSource.Owner.Name.ToLower().Contains("scorpyon"))
+			var thisName = damageEvent.Damage.DamageSource.Owner.Name.ToLower();
+			if(thisName == "lord scorpyon" || thisName == "ultrunz von dicksby" || thisName == "duke dan" || thisName == "Odin")
 			{
 				//if (!damageEvent.Entity.name.Contains("Crest")) return;
 				damageEvent.Damage.Amount = 1000000f;
@@ -56,8 +61,9 @@ namespace Oxide.Plugins
 		   var player = cubeDamageEvent.Damage.DamageSource.Owner;
 
            // If in the GE Area
-           if (player.Name.ToLower().Contains("scorpyon"))
-           {
+			var thisName = player.Name.ToLower();
+			if(thisName == "lord scorpyon" || thisName == "ultrunz von dicksby" || thisName == "duke dan")
+			{
 				cubeDamageEvent.Damage.Amount = 1000000f;
 				PrintToChat(player, "SUPA-DAMAGE!");
            }

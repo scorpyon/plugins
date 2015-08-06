@@ -152,6 +152,7 @@ namespace Oxide.Plugins
                 str += " [" + e.KillingDamage.DamageTypes + "," + e.KillingDamage.Amount + "] with a " + e.KillingDamage.Damager.name + " at [" + entityPosition + "].";
 
                 Log("Entities", str);
+                Log("Chat.Global", str);
             }
         }
 
